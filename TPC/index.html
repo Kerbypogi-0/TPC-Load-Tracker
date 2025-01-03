@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Balance Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f0f2f5;
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        h1, h2 {
+            color: #1a73e8;
+            margin-bottom: 20px;
+            font-size: 24px;
+            text-align: center;
+        }
+
+        h2 {
+            font-size: 20px;
+        }
+
+        .balance-section {
+            background: #e8f0fe;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .balance {
+            font-size: 32px;
+            color: #1a73e8;
+            text-align: center;
+            margin: 10px 0;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #5f6368;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #dadce0;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #dadce0;
+            border-radius: 5px;
+            font-size: 16px;
+            background-color: white;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #1a73e8;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-bottom: 15px;
+        }
+
+        button:hover {
+            background: #1557b0;
+        }
+
+        button.reset-button {
+            background: #d93025;
+        }
+
+        button.reset-button:hover {
+            background: #a50e0e;
+        }
+
+        button.paid-button {
+            background: #34a853;
+            padding: 8px;
+            margin: 5px 0;
+        }
+
+        button.paid-button:hover {
+            background: #2d8e47;
+        }
+
+        button.borrowed-button {
+            background: #fbbc05;
+            padding: 8px;
+            margin: 5px 0;
+        }
+
+        button.borrowed-button:hover {
+            background: #d69e04;
+        }
+
+        .transactions {
+            margin-top: 20px;
+        }
+
+        .transaction-item {
+            padding: 10px;
+            border-bottom: 1px solid #dadce0;
+        }
+
+        .transaction-main {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        .transaction-info {
+            flex-grow: 1;
+        }
+
+        .transaction-amount {
+            color: #d93025;
+            font-weight: bold;
+        }
+
+        .transaction-date {
+            font-size: 12px;
+            color: #5f6368;
+        }
+
+        .transaction-status {
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            margin-top: 5px;
+        }
+
+        .status-paid {
+            background-color: #e6f4ea;
+            color: #34a853;
+        }
+
+        .status-borrowed {
+            background-color: #fef7e0;
+            color: #fbbc05;
+        }
+
+        .remaining-amount {
+            font-size: 12px;
+            color: #fbbc05;
+            margin-top: 5px;
+        }
+
+        .no-transactions {
+            text-align: center;
+            color: #5f6368;
+            padding: 20px;
+        }
+
+        .history-group {
+            background: #f8f9fa;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+
+        .history-header {
+            font-weight: bold;
+            color: #1a73e8;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #1a73e8;
+        }
+
+        #resetButton {
+            display: none;
+        }
+
+        .history-balance {
+            font-weight: bold;
+            color: #1a73e8;
+            margin-bottom: 10px;
+        }
+
+        .payment-form {
+            margin-top: 10px;
+            display: none;
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Balance Tracker</h1>
+        
+        <div class="balance-section">
+            <label>Current Balance</label>
+            <div class="balance" id="currentBalance">₱0.00</div>
+        </div>
+
+        <div class="form-group">
+            <label>Set Initial Balance</label>
+            <input type="number" id="initialBalance" placeholder="Enter initial balance">
+            <button onclick="setInitialBalance()">Set Balance</button>
+        </div>
+
+        <div class="form-group">
+            <label>Buyer Name</label>
+            <input type="text" id="buyerName" placeholder="Enter buyer name">
+        </div>
+
+        <div class="form-group">
+            <label>Amount</label>
+            <input type="number" id="amount" placeholder="Enter amount">
+        </div>
+
+        <div class="form-group">
+            <label>Transaction Type</label>
+            <select id="transactionType" title="Transaction Type">
+                <option value="paid">Paid</option>
+                <option value="borrowed">Borrowed</option>
+            </select>
+        </div>
+
+        <button onclick="addTransaction()">Add Transaction</button>
+        <button id="resetButton" onclick="resetBalance()" class="reset-button">Reset Balance</button>
+
+        <div class="transactions" id="transactionsList">
+            <div class="no-transactions">No transactions yet</div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>Transaction History</h2>
+        <div id="transactionHistory"></div>
+    </div>
+
+    <script>
+        let currentBalance = 0;
+        let transactions = [];
+        let historicalTransactions = [];
+
+        function formatCurrency(amount) {
+            return '₱' + amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        }
+
+        function setInitialBalance() {
+            const initialBalanceInput = document.getElementById('initialBalance');
+            const amount = parseFloat(initialBalanceInput.value);
+            
+            if (isNaN(amount) || amount < 0) {
+                alert('Please enter a valid amount');
+                return;
+            }
+
+            currentBalance = amount;
+            updateBalanceDisplay();
+            initialBalanceInput.value = '';
+            
+            transactions = [];
+            updateTransactionsList();
+            checkBalance();
+        }
+
+        function addTransaction() {
+            const buyerNameInput = document.getElementById('buyerName');
+            const amountInput = document.getElementById('amount');
+            const transactionType = document.getElementById('transactionType').value;
+            
+            const buyerName = buyerNameInput.value.trim();
+            const amount = parseFloat(amountInput.value);
+
+            if (!buyerName) {
+                alert('Please enter a buyer name');
+                return;
+            }
+
+            if (isNaN(amount) || amount <= 0) {
+                alert('Please enter a valid amount');
+                return;
+            }
+
+            if (amount > currentBalance) {
+                alert('Transaction amount cannot exceed current balance');
+                return;
+            }
+
+            const transaction = {
+                buyerName,
+                amount,
+                date: new Date().toLocaleString(),
+                type: transactionType,
+                remainingAmount: transactionType === 'borrowed' ? amount : 0,
+                payments: []
+            };
+
+            currentBalance -= amount;
+            transactions.unshift(transaction);
+
+            updateBalanceDisplay();
+            updateTransactionsList();
+            checkBalance();
+
+            buyerNameInput.value = '';
+            amountInput.value = '';
+        }
+
+        function togglePaymentForm(index) {
+            const form = document.getElementById(`paymentForm-${index}`);
+            form.style.display = form.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function makePayment(index) {
+            const paymentAmount = parseFloat(document.getElementById(`paymentAmount-${index}`).value);
+            const transaction = transactions[index];
+
+            if (isNaN(paymentAmount) || paymentAmount <= 0) {
+                alert('Please enter a valid payment amount');
+                return;
+            }
+
+            if (paymentAmount > transaction.remainingAmount) {
+                alert('Payment amount cannot exceed remaining balance');
+                return;
+            }
+
+            transaction.remainingAmount -= paymentAmount;
+            transaction.payments.push({
+                amount: paymentAmount,
+                date: new Date().toLocaleString()
+            });
+
+            if (transaction.remainingAmount === 0) {
+                transaction.type = 'paid';
+            }
+
+            updateTransactionsList();
+            togglePaymentForm(index);
+        }
+
+        function checkBalance() {
+            const resetButton = document.getElementById('resetButton');
+            if (currentBalance === 0) {
+                resetButton.style.display = 'block';
+            } else {
+                resetButton.style.display = 'none';
+            }
+        }
+
+        function resetBalance() {
+            if (transactions.length > 0) {
+                const historyGroup = {
+                    date: new Date().toLocaleString(),
+                    initialBalance: currentBalance + transactions.reduce((sum, t) => sum + t.amount, 0),
+                    transactions: [...transactions]
+                };
+                historicalTransactions.unshift(historyGroup);
+                updateTransactionHistory();
+            }
+
+            transactions = [];
+            currentBalance = 0;
+            updateBalanceDisplay();
+            updateTransactionsList();
+            checkBalance();
+        }
+
+        function updateBalanceDisplay() {
+            document.getElementById('currentBalance').textContent = formatCurrency(currentBalance);
+        }
+
+        function updateTransactionsList() {
+            const transactionsList = document.getElementById('transactionsList');
+            
+            if (transactions.length === 0) {
+                transactionsList.innerHTML = '<div class="no-transactions">No transactions yet</div>';
+                return;
+            }
+
+            transactionsList.innerHTML = transactions.map((transaction, index) => `
+                <div class="transaction-item">
+                    <div class="transaction-main">
+                        <div class="transaction-info">
+                            <div>${transaction.buyerName}</div>
+                            <div class="transaction-date">${transaction.date}</div>
+                        </div>
+                        <div class="transaction-amount">-${formatCurrency(transaction.amount)}</div>
+                    </div>
+                    <div class="transaction-status ${transaction.type === 'paid' ? 'status-paid' : 'status-borrowed'}">
+                        ${transaction.type === 'paid' ? 'Paid' : 'Borrowed'}
+                    </div>
+                    ${transaction.type === 'borrowed' ? `
+                        <div class="remaining-amount">Remaining: ${formatCurrency(transaction.remainingAmount)}</div>
+                        <button class="borrowed-button" onclick="togglePaymentForm(${index})">Make Payment</button>
+                        <div id="paymentForm-${index}" class="payment-form">
+                            <input type="number" id="paymentAmount-${index}" placeholder="Enter payment amount">
+                            <button class="paid-button" onclick="makePayment(${index})">Submit Payment</button>
+                        </div>
+                        ${transaction.payments.map(payment => `
+                            <div class="transaction-date">Payment: ${formatCurrency(payment.amount)} on ${payment.date}</div>
+                        `).join('')}
+                    ` : ''}
+                </div>
+            `).join('');
+        }
+
+        function updateTransactionHistory() {
+            const historyContainer = document.getElementById('transactionHistory');
+            
+            if (historicalTransactions.length === 0) {
+                historyContainer.innerHTML = '<div class="no-transactions">No historical transactions</div>';
+                return;
+            }
+
+            historyContainer.innerHTML = historicalTransactions.map(group => `
+                <div class="history-group">
+                    <div class="history-header">Session: ${group.date}</div>
+                    <div class="history-balance">Initial Balance: ${formatCurrency(group.initialBalance)}</div>
+                    ${group.transactions.map(transaction => `
+                        <div class="transaction-item">
+                            <div class="transaction-main">
+                                <div class="transaction-info">
+                                    <div>${transaction.buyerName}</div>
+                                    <div class="transaction-date">${transaction.date}</div>
+                                </div>
+                                <div class="transaction-amount">-${formatCurrency(transaction.amount)}</div>
+                            </div>
+                            <div class="transaction-status ${transaction.type === 'paid' ? 'status-paid' : 'status-borrowed'}">
+                                ${transaction.type === 'paid' ? 'Paid' : 'Borrowed'}
+                            </div>
+                            ${transaction.type === 'borrowed' ? `
+                                <div class="remaining-amount">Final Remaining: ${formatCurrency(transaction.remainingAmount)}</div>
+                                ${transaction.payments.map(payment => `
+                                    <div class="transaction-date">Payment: ${formatCurrency(payment.amount)} on ${payment.date}</div>
+                                `).join('')}
+                            ` : ''}
+                        </div>
+                    `).join('')}
+                </div>
+            `).join('');
+        }
+
+        // Initialize the display
+        updateBalanceDisplay();
+        checkBalance();
+        updateTransactionHistory();
+    </script>
+</body>
+</html>
