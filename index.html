@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Balance Tracker</title>
+    <title>Balance Tracker (Offline)</title>
     <style>
         * {
             margin: 0;
@@ -123,6 +123,16 @@
             background: #d69e04;
         }
 
+        button.complete-button {
+            background: #4285f4;
+            padding: 8px;
+            margin: 5px 0;
+        }
+
+        button.complete-button:hover {
+            background: #3367d6;
+        }
+
         .transactions {
             margin-top: 20px;
         }
@@ -158,6 +168,7 @@
             padding: 4px 8px;
             border-radius: 12px;
             margin-top: 5px;
+            display: inline-block;
         }
 
         .status-paid {
@@ -195,16 +206,9 @@
             margin-bottom: 10px;
             padding-bottom: 5px;
             border-bottom: 2px solid #1a73e8;
-        }
-
-        #resetButton {
-            display: none;
-        }
-
-        .history-balance {
-            font-weight: bold;
-            color: #1a73e8;
-            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         .payment-form {
@@ -214,11 +218,33 @@
             padding: 10px;
             border-radius: 5px;
         }
+
+        .offline-indicator {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            z-index: 1000;
+        }
+
+        .online {
+            background-color: #e6f4ea;
+            color: #34a853;
+        }
+
+        .offline {
+            background-color: #fef7e0;
+            color: #fbbc05;
+        }
     </style>
 </head>
 <body>
+    <div id="offlineIndicator" class="offline-indicator">Loading...</div>
+
     <div class="container">
-        <h1>Balance Tracker</h1>
+        <h1>Balance Tracker (Offline)</h1>
         
         <div class="balance-section">
             <label>Current Balance</label>
@@ -267,6 +293,31 @@
         let transactions = [];
         let historicalTransactions = [];
 
+        // Load data from localStorage on startup
+        function loadData() {
+            const savedData = localStorage.getItem('balanceTrackerData');
+            if (savedData) {
+                const data = JSON.parse(savedData);
+                currentBalance = data.currentBalance;
+                transactions = data.transactions;
+                historicalTransactions = data.historicalTransactions;
+                updateBalanceDisplay();
+                updateTransactionsList();
+                updateTransactionHistory();
+                checkBalance();
+            }
+        }
+
+        // Save data to localStorage
+        function saveData() {
+            const data = {
+                currentBalance,
+                transactions,
+                historicalTransactions
+            };
+            localStorage.setItem('balanceTrackerData', JSON.stringify(data));
+        }
+
         function formatCurrency(amount) {
             return '₱' + amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
         }
@@ -287,50 +338,59 @@
             transactions = [];
             updateTransactionsList();
             checkBalance();
+            saveData();
         }
 
         function addTransaction() {
-            const buyerNameInput = document.getElementById('buyerName');
-            const amountInput = document.getElementById('amount');
-            const transactionType = document.getElementById('transactionType').value;
-            
-            const buyerName = buyerNameInput.value.trim();
-            const amount = parseFloat(amountInput.value);
+    const buyerNameInput = document.getElementById('buyerName');
+    const amountInput = document.getElementById('amount');
+    const transactionType = document.getElementById('transactionType');
+    
+    const buyerName = buyerNameInput.value.trim();
+    const amount = parseFloat(amountInput.value);
 
-            if (!buyerName) {
-                alert('Please enter a buyer name');
-                return;
-            }
+    if (!buyerName) {
+        alert('Please enter a buyer name');
+        return;
+    }
 
-            if (isNaN(amount) || amount <= 0) {
-                alert('Please enter a valid amount');
-                return;
-            }
+    if (isNaN(amount) || amount <= 0) {
+        alert('Please enter a valid amount');
+        return;
+    }
 
-            if (amount > currentBalance) {
-                alert('Transaction amount cannot exceed current balance');
-                return;
-            }
+    if (amount > currentBalance) {
+        alert('Transaction amount cannot exceed current balance');
+        return;
+    }
 
-            const transaction = {
-                buyerName,
-                amount,
-                date: new Date().toLocaleString(),
-                type: transactionType,
-                remainingAmount: transactionType === 'borrowed' ? amount : 0,
-                payments: []
-            };
+    const transaction = {
+        buyerName,
+        amount,
+        date: new Date().toLocaleString(),
+        type: transactionType.value,
+        remainingAmount: transactionType.value === 'borrowed' ? amount : 0,
+        payments: []
+    };
 
-            currentBalance -= amount;
-            transactions.unshift(transaction);
+    const reward = amount * 0.01;
+    currentBalance = currentBalance - amount + reward;
+    transaction.reward = reward;
 
-            updateBalanceDisplay();
-            updateTransactionsList();
-            checkBalance();
+    transactions.unshift(transaction);
+    updateBalanceDisplay();
+    updateTransactionsList();
+    saveData();
 
-            buyerNameInput.value = '';
-            amountInput.value = '';
-        }
+    // Reset all input fields
+    buyerNameInput.value = '';
+    amountInput.value = '';
+    transactionType.selectedIndex = 0;
+    
+    // Set focus back to buyer name field
+    buyerNameInput.focus();
+}
+
 
         function togglePaymentForm(index) {
             const form = document.getElementById(`paymentForm-${index}`);
@@ -363,114 +423,169 @@
 
             updateTransactionsList();
             togglePaymentForm(index);
+            saveData();
         }
 
-        function checkBalance() {
-            const resetButton = document.getElementById('resetButton');
-            if (currentBalance === 0) {
-                resetButton.style.display = 'block';
-            } else {
-                resetButton.style.display = 'none';
+        function completeHistoricalPayments(groupIndex) {
+            const group = historicalTransactions[groupIndex];
+            const borrowedTransactions = group.transactions.filter(t => t.type === 'borrowed' && t.remainingAmount > 0);
+            
+            if (borrowedTransactions.length === 0) {
+                alert('No pending borrowed transactions in this session');
+                return;
             }
+
+            borrowedTransactions.forEach(transaction => {
+                transaction.type = 'paid';
+                transaction.payments.push({
+                    amount: transaction.remainingAmount,
+                    date: new Date().toLocaleString()
+                });
+                transaction.remainingAmount = 0;
+            });
+
+            updateTransactionHistory();
+            saveData();
         }
+
 
         function resetBalance() {
-            if (transactions.length > 0) {
-                const historyGroup = {
-                    date: new Date().toLocaleString(),
-                    initialBalance: currentBalance + transactions.reduce((sum, t) => sum + t.amount, 0),
-                    transactions: [...transactions]
-                };
-                historicalTransactions.unshift(historyGroup);
-                updateTransactionHistory();
-            }
+    if (transactions.length > 0) {
+        // Calculate total borrowed amount that's still unpaid
+        const unpaidBorrowed = transactions.reduce((sum, t) => 
+            sum + (t.type === 'borrowed' ? t.remainingAmount : 0), 0);
+        
+        const historyGroup = {
+            date: new Date().toLocaleString(),
+            initialBalance: currentBalance + transactions.reduce((sum, t) => sum + t.amount, 0),
+            transactions: [...transactions],
+            hasUnpaidBalance: unpaidBorrowed > 0
+        };
+        historicalTransactions.unshift(historyGroup);
+        updateTransactionHistory();
+    }
 
-            transactions = [];
-            currentBalance = 0;
-            updateBalanceDisplay();
-            updateTransactionsList();
-            checkBalance();
-        }
+    transactions = [];
+    currentBalance = 0;
+    updateBalanceDisplay();
+    updateTransactionsList();
+    saveData();
+}
 
         function updateBalanceDisplay() {
             document.getElementById('currentBalance').textContent = formatCurrency(currentBalance);
         }
 
         function updateTransactionsList() {
-            const transactionsList = document.getElementById('transactionsList');
-            
-            if (transactions.length === 0) {
-                transactionsList.innerHTML = '<div class="no-transactions">No transactions yet</div>';
-                return;
-            }
+    const transactionsList = document.getElementById('transactionsList');
+    
+    if (transactions.length === 0) {
+        transactionsList.innerHTML = '<div class="no-transactions">No transactions yet</div>';
+        return;
+    }
 
-            transactionsList.innerHTML = transactions.map((transaction, index) => `
+    transactionsList.innerHTML = transactions.map((transaction, index) => `
+        <div class="transaction-item">
+            <div class="transaction-main">
+                <div class="transaction-info">
+                    <div>${transaction.buyerName}</div>
+                    <div class="transaction-date">${transaction.date}</div>
+                </div>
+                <div class="transaction-amount">
+                    -${formatCurrency(transaction.amount)}
+                    <div style="color: #34a853; font-size: 12px;">+${formatCurrency(transaction.reward)} (1% reward)</div>
+                </div>
+            </div>
+            <div class="transaction-status ${transaction.type === 'paid' ? 'status-paid' : 'status-borrowed'}">
+                ${transaction.type === 'paid' ? 'Paid' : 'Borrowed'}
+            </div>
+            ${transaction.type === 'borrowed' ? `
+                <div class="remaining-amount">Remaining: ${formatCurrency(transaction.remainingAmount)}</div>
+                <button class="borrowed-button" onclick="togglePaymentForm(${index})">Make Payment</button>
+                <div id="paymentForm-${index}" class="payment-form">
+                    <input type="number" id="paymentAmount-${index}" placeholder="Enter payment amount">
+                    <button class="paid-button" onclick="makePayment(${index})">Submit Payment</button>
+                </div>
+                ${transaction.payments.map(payment => `
+                    <div class="transaction-date">Payment: ${formatCurrency(payment.amount)} on ${payment.date}</div>
+                `).join('')}
+            ` : ''}
+        </div>
+    `).join('');
+}
+
+function updateTransactionHistory() {
+    const historyContainer = document.getElementById('transactionHistory');
+    
+    if (historicalTransactions.length === 0) {
+        historyContainer.innerHTML = '<div class="no-transactions">No historical transactions</div>';
+        return;
+    }
+
+    historyContainer.innerHTML = historicalTransactions.map((group, groupIndex) => `
+        <div class="history-group">
+            <div class="history-header">
+                <span>Session: ${group.date}</span>
+                <div>
+                    ${group.hasUnpaidBalance ? 
+                        '<span style="color: #d93025; margin-right: 10px;">Unpaid Balance!</span>' : ''}
+                    <button 
+                        class="complete-button" 
+                        onclick="completeHistoricalPayments(${groupIndex})"
+                        style="display: ${group.transactions.some(t => t.type === 'borrowed' && t.remainingAmount > 0) ? 'inline-block' : 'none'}"
+                    >
+                        Complete All Payments
+                    </button>
+                </div>
+            </div>
+            <div class="history-balance">Initial Balance: ${formatCurrency(group.initialBalance)}</div>
+            ${group.transactions.map(transaction => `
                 <div class="transaction-item">
                     <div class="transaction-main">
                         <div class="transaction-info">
                             <div>${transaction.buyerName}</div>
                             <div class="transaction-date">${transaction.date}</div>
                         </div>
-                        <div class="transaction-amount">-${formatCurrency(transaction.amount)}</div>
+                        <div class="transaction-amount">
+                            -${formatCurrency(transaction.amount)}
+                            ${transaction.reward ? 
+                                `<div style="color: #34a853; font-size: 12px;">+${formatCurrency(transaction.reward)} (1% reward)</div>` 
+                                : ''}
+                        </div>
                     </div>
                     <div class="transaction-status ${transaction.type === 'paid' ? 'status-paid' : 'status-borrowed'}">
                         ${transaction.type === 'paid' ? 'Paid' : 'Borrowed'}
                     </div>
                     ${transaction.type === 'borrowed' ? `
-                        <div class="remaining-amount">Remaining: ${formatCurrency(transaction.remainingAmount)}</div>
-                        <button class="borrowed-button" onclick="togglePaymentForm(${index})">Make Payment</button>
-                        <div id="paymentForm-${index}" class="payment-form">
-                            <input type="number" id="paymentAmount-${index}" placeholder="Enter payment amount">
-                            <button class="paid-button" onclick="makePayment(${index})">Submit Payment</button>
-                        </div>
+                        <div class="remaining-amount">Final Remaining: ${formatCurrency(transaction.remainingAmount)}</div>
                         ${transaction.payments.map(payment => `
                             <div class="transaction-date">Payment: ${formatCurrency(payment.amount)} on ${payment.date}</div>
                         `).join('')}
                     ` : ''}
                 </div>
-            `).join('');
-        }
+            `).join('')}
+        </div>
+    `).join('');
+}
 
-        function updateTransactionHistory() {
-            const historyContainer = document.getElementById('transactionHistory');
-            
-            if (historicalTransactions.length === 0) {
-                historyContainer.innerHTML = '<div class="no-transactions">No historical transactions</div>';
-                return;
+        // Handle online/offline status
+        function updateOnlineStatus() {
+            const indicator = document.getElementById('offlineIndicator');
+            if (navigator.onLine) {
+                indicator.textContent = 'Online';
+                indicator.className = 'offline-indicator online';
+            } else {
+                indicator.textContent = 'Offline (App still working)';
+                indicator.className = 'offline-indicator offline';
             }
-
-            historyContainer.innerHTML = historicalTransactions.map(group => `
-                <div class="history-group">
-                    <div class="history-header">Session: ${group.date}</div>
-                    <div class="history-balance">Initial Balance: ${formatCurrency(group.initialBalance)}</div>
-                    ${group.transactions.map(transaction => `
-                        <div class="transaction-item">
-                            <div class="transaction-main">
-                                <div class="transaction-info">
-                                    <div>${transaction.buyerName}</div>
-                                    <div class="transaction-date">${transaction.date}</div>
-                                </div>
-                                <div class="transaction-amount">-${formatCurrency(transaction.amount)}</div>
-                            </div>
-                            <div class="transaction-status ${transaction.type === 'paid' ? 'status-paid' : 'status-borrowed'}">
-                                ${transaction.type === 'paid' ? 'Paid' : 'Borrowed'}
-                            </div>
-                            ${transaction.type === 'borrowed' ? `
-                                <div class="remaining-amount">Final Remaining: ${formatCurrency(transaction.remainingAmount)}</div>
-                                ${transaction.payments.map(payment => `
-                                    <div class="transaction-date">Payment: ${formatCurrency(payment.amount)} on ${payment.date}</div>
-                                `).join('')}
-                            ` : ''}
-                        </div>
-                    `).join('')}
-                </div>
-            `).join('');
         }
 
-        // Initialize the display
-        updateBalanceDisplay();
-        checkBalance();
-        updateTransactionHistory();
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+
+        // Initialize the application
+        loadData();
+        updateOnlineStatus();
     </script>
 </body>
 </html>
