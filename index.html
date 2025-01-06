@@ -127,6 +127,7 @@
             background: #4285f4;
             padding: 8px;
             margin: 5px 0;
+            width: auto;
         }
 
         button.complete-button:hover {
@@ -211,61 +212,78 @@
             align-items: center;
         }
 
-        .payment-form {
-            margin-top: 10px;
-            display: none;
-            background: #f8f9fa;
-            padding: 10px;
-            border-radius: 5px;
-        }
-
-        .offline-indicator {
+        .notification {
             position: fixed;
-            top: 10px;
-            right: 10px;
-            padding: 5px 10px;
-            border-radius: 5px;
-            font-size: 12px;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 15px 25px;
+            border-radius: 8px;
+            background-color: white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: slideDown 0.3s ease-out;
+            max-width: 90%;
+            width: auto;
         }
 
-        .online {
+        .notification.error {
+            background-color: #fce8e8;
+            color: #d93025;
+            border-left: 4px solid #d93025;
+        }
+
+        .notification.success {
             background-color: #e6f4ea;
             color: #34a853;
+            border-left: 4px solid #34a853;
         }
 
-        .offline {
+        .notification.warning {
             background-color: #fef7e0;
             color: #fbbc05;
+            border-left: 4px solid #fbbc05;
         }
+
+        @keyframes slideDown {
+            from {
+                transform: translate(-50%, -100%);
+                opacity: 0;
+            }
+            to {
+                transform: translate(-50%, 0);
+                opacity: 1;
+            }
+        }
+
         .footer {
-    text-align: center;
-    padding: 20px;
-    margin-top: 20px;
-    color: #1a73e8;
-    font-size: 14px;
-    font-weight: 500;
-    border-top: 1px solid #e8eaed;
-}
+            text-align: center;
+            padding: 20px;
+            margin-top: 20px;
+            color: #1a73e8;
+            font-size: 14px;
+            font-weight: 500;
+            border-top: 1px solid #e8eaed;
+        }
 
-.footer span {
-    color: #d93025;
-    animation: heartbeat 1.5s infinite;
-}
+        .footer span {
+            color: #d93025;
+            animation: heartbeat 1.5s infinite;
+        }
 
-@keyframes heartbeat {
-    0% { transform: scale(1); }
-    14% { transform: scale(1.3); }
-    28% { transform: scale(1); }
-    42% { transform: scale(1.3); }
-    70% { transform: scale(1); }
-}
-
+        @keyframes heartbeat {
+            0% { transform: scale(1); }
+            14% { transform: scale(1.3); }
+            28% { transform: scale(1); }
+            42% { transform: scale(1.3); }
+            70% { transform: scale(1); }
+        }
     </style>
 </head>
 <body>
-    <div id="offlineIndicator" class="offline-indicator">Loading...</div>
-
     <div class="container">
         <h1>Balance Tracker</h1>
         
@@ -292,14 +310,14 @@
 
         <div class="form-group">
             <label>Transaction Type</label>
-            <select id="transactionType" title="Transaction Type">
+            <select id="transactionType">
                 <option value="paid">Paid</option>
                 <option value="borrowed">Borrowed</option>
             </select>
         </div>
 
         <button onclick="addTransaction()">Add Transaction</button>
-        <button id="resetButton" onclick="resetBalance()" class="reset-button">Reset Balance</button>
+        <button onclick="resetBalance()" class="reset-button">Reset Balance</button>
 
         <div class="transactions" id="transactionsList">
             <div class="no-transactions">No transactions yet</div>
@@ -314,107 +332,63 @@
     <div class="footer">
         Made by Kerby with <span>♥</span>
     </div>
+
     <script>
         let currentBalance = 0;
         let transactions = [];
         let historicalTransactions = [];
 
-        // Load data from localStorage on startup
-        function loadData() {
-    try {
-        const savedData = localStorage.getItem('balanceTrackerData');
-        if (savedData) {
-            const data = JSON.parse(savedData);
-            currentBalance = data.currentBalance || 0;
-            
-            transactions = (data.transactions || []).map(t => ({
-                ...t,
-                type: t.type // Maintain the saved type
-            }));
-            
-            historicalTransactions = (data.historicalTransactions || []).map(group => ({
-                ...group,
-                transactions: group.transactions.map(t => ({
-                    ...t,
-                    type: t.type // Maintain the saved type
-                }))
-            }));
-            
-            updateBalanceDisplay();
-            updateTransactionsList();
-            updateTransactionHistory();
-        }
-    } catch (error) {
-        console.error('Error loading data:', error);
-        currentBalance = 0;
-        transactions = [];
-        historicalTransactions = [];
-    }
-}
-
-
-function validateAndRepairData() {
-    transactions = transactions.map(transaction => {
-        if (transaction.remainingAmount === 0 && transaction.type === 'borrowed') {
-            transaction.type = 'paid';
-        }
-        return transaction;
-    });
-    
-    historicalTransactions = historicalTransactions.map(group => {
-        group.transactions = group.transactions.map(transaction => {
-            if (transaction.remainingAmount === 0 && transaction.type === 'borrowed') {
-                transaction.type = 'paid';
+        function showNotification(message, type = 'error') {
+            const existingNotification = document.querySelector('.notification');
+            if (existingNotification) {
+                existingNotification.remove();
             }
-            return transaction;
-        });
-        return group;
-    });
-    
-    saveData();
-}
 
-// Initialize everything when the document is ready
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize online status immediately
-    updateOnlineStatus();
-    
-    // Load saved data
-    loadData();
-    
-    // Add event listeners for online/offline status
-    window.addEventListener('online', updateOnlineStatus);
-    window.addEventListener('offline', updateOnlineStatus);
-});
-        // Save data to localStorage
-        function saveData() {
-    try {
-        // Validate transactions before saving
-        const validatedTransactions = transactions.map(t => 
-            t.remainingAmount === 0 ? { ...t, type: 'paid' } : t
-        );
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
 
-        const validatedHistoricalTransactions = historicalTransactions.map(group => ({
-            ...group,
-            transactions: group.transactions.map(t => 
-                t.remainingAmount === 0 ? { ...t, type: 'paid' } : t
-            )
-        }));
+            document.body.appendChild(notification);
 
-        const data = {
-            currentBalance,
-            transactions: validatedTransactions,
-            historicalTransactions: validatedHistoricalTransactions
-        };
-        
-        localStorage.setItem('balanceTrackerData', JSON.stringify(data));
-    } catch (error) {
-        console.error('Error saving data:', error);
-    }
-}
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
 
         function formatCurrency(amount) {
             return '₱' + amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        }
+
+        function loadData() {
+            try {
+                const savedData = localStorage.getItem('balanceTrackerData');
+                if (savedData) {
+                    const data = JSON.parse(savedData);
+                    currentBalance = data.currentBalance || 0;
+                    transactions = data.transactions || [];
+                    historicalTransactions = data.historicalTransactions || [];
+                    updateBalanceDisplay();
+                    updateTransactionsList();
+                    updateTransactionHistory();
+                }
+            } catch (error) {
+                console.error('Error loading data:', error);
+                showNotification('Error loading saved data', 'error');
+            }
+        }
+
+        function saveData() {
+            try {
+                const data = {
+                    currentBalance,
+                    transactions,
+                    historicalTransactions
+                };
+                localStorage.setItem('balanceTrackerData', JSON.stringify(data));
+            } catch (error) {
+                console.error('Error saving data:', error);
+                showNotification('Error saving data', 'error');
+            }
         }
 
         function setInitialBalance() {
@@ -422,7 +396,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const amount = parseFloat(initialBalanceInput.value);
             
             if (isNaN(amount) || amount < 0) {
-                alert('Please enter a valid amount');
+                showNotification('Please enter a valid amount', 'error');
                 return;
             }
 
@@ -432,213 +406,154 @@ document.addEventListener('DOMContentLoaded', function() {
             
             transactions = [];
             updateTransactionsList();
-            checkBalance();
             saveData();
+            showNotification('Initial balance set successfully', 'success');
         }
 
         function addTransaction() {
-    const buyerNameInput = document.getElementById('buyerName');
-    const amountInput = document.getElementById('amount');
-    const transactionType = document.getElementById('transactionType');
-    
-    const buyerName = buyerNameInput.value.trim();
-    const amount = parseFloat(amountInput.value);
+            const buyerNameInput = document.getElementById('buyerName');
+            const amountInput = document.getElementById('amount');
+            const transactionType = document.getElementById('transactionType');
+            
+            const buyerName = buyerNameInput.value.trim();
+            const amount = parseFloat(amountInput.value);
 
-    if (!buyerName) {
-        alert('Please enter a buyer name');
-        return;
-    }
-
-    if (isNaN(amount) || amount <= 0) {
-        alert('Please enter a valid amount');
-        return;
-    }
-
-    const transaction = {
-        buyerName,
-        amount,
-        date: new Date().toLocaleString(),
-        type: transactionType.value,
-        remainingAmount: transactionType.value === 'borrowed' ? amount : 0,
-        payments: []
-    };
-
-    // Ensure type is set correctly based on remainingAmount
-    if (transaction.remainingAmount === 0) {
-        transaction.type = 'paid';
-    }
-
-    const reward = amount * 0.01;
-    currentBalance = currentBalance - amount + reward;
-    transaction.reward = reward;
-
-    transactions.unshift(transaction);
-    updateBalanceDisplay();
-    updateTransactionsList();
-    saveData();
-
-    // Reset inputs
-    buyerNameInput.value = '';
-    amountInput.value = '';
-    transactionType.selectedIndex = 0;
-    buyerNameInput.focus();
-}
-
-
-function validateTransactions() {
-    // Validate current transactions
-    transactions = transactions.map(transaction => {
-        if (transaction.remainingAmount === 0) {
-            return {
-                ...transaction,
-                type: 'paid'
-            };
-        }
-        return transaction;
-    });
-
-    // Validate historical transactions
-    historicalTransactions = historicalTransactions.map(group => ({
-        ...group,
-        transactions: group.transactions.map(transaction => {
-            if (transaction.remainingAmount === 0) {
-                return {
-                    ...transaction,
-                    type: 'paid'
-                };
+            if (!buyerName) {
+                showNotification('Please enter a buyer name', 'error');
+                return;
             }
-            return transaction;
-        })
-    }));
 
-    // Save the validated data
-    saveData();
-}
+            if (isNaN(amount) || amount <= 0) {
+                showNotification('Please enter a valid amount', 'error');
+                return;
+            }
 
-function completeHistoricalPayments(groupIndex) {
-    const group = historicalTransactions[groupIndex];
-    const borrowedTransactions = group.transactions.filter(t => t.type === 'borrowed' && t.remainingAmount > 0);
-    
-    if (borrowedTransactions.length === 0) {
-        alert('No pending borrowed transactions in this session');
-        return;
-    }
+            if (amount > currentBalance && transactionType.value === 'paid') {
+                showNotification('Amount exceeds current balance', 'error');
+                return;
+            }
 
-    borrowedTransactions.forEach(transaction => {
-        transaction.type = 'paid';
-        transaction.fullyPaidDate = new Date().toLocaleString();
-        transaction.payments.push({
-            amount: transaction.remainingAmount,
-            date: new Date().toLocaleString()
-        });
-        transaction.remainingAmount = 0;
-    });
+            const transaction = {
+                buyerName,
+                amount,
+                date: new Date().toLocaleString(),
+                type: transactionType.value,
+                remainingAmount: transactionType.value === 'borrowed' ? amount : 0,
+                payments: []
+            };
 
-    updateTransactionHistory();
-    saveData(); // Save the updated state
-}
+            const reward = amount * 0.01;
+            currentBalance = currentBalance - amount + reward;
+            transaction.reward = reward;
+
+            transactions.unshift(transaction);
+            updateBalanceDisplay();
+            updateTransactionsList();
+            saveData();
+
+            buyerNameInput.value = '';
+            amountInput.value = '';
+            transactionType.selectedIndex = 0;
+            buyerNameInput.focus();
+
+            showNotification('Transaction added successfully', 'success');
+        }
+
+        function markAsPaid(index) {
+            const transaction = transactions[index];
+            
+            transaction.type = 'paid';
+            transaction.remainingAmount = 0;
+            transaction.fullyPaidDate = new Date().toLocaleString();
+            
+            transaction.payments = [{
+                amount: transaction.amount,
+                date: new Date().toLocaleString()
+            }];
+
+            updateTransactionsList();
+            saveData();
+            showNotification('Transaction marked as paid', 'success');
+        }
+
+        function completeHistoricalPayments(groupIndex) {
+            const group = historicalTransactions[groupIndex];
+            if (!group) {
+                showNotification('Session not found', 'error');
+                return;
+            }
+
+            let borrowedTransactions = group.transactions.filter(t => 
+                t.type === 'borrowed' && t.remainingAmount > 0
+            );
+            
+            if (borrowedTransactions.length === 0) {
+                showNotification('No pending borrowed transactions in this session', 'warning');
+                return;
+            }
+
+            let completedCount = 0;
+            borrowedTransactions.forEach(transaction => {
+                if (transaction.type === 'borrowed' && transaction.remainingAmount > 0) {
+                    transaction.type = 'paid';
+                    transaction.fullyPaidDate = new Date().toLocaleString();
+                    transaction.payments.push({
+                        amount: transaction.remainingAmount,
+                        date: new Date().toLocaleString()
+                    });
+                    transaction.remainingAmount = 0;
+                    completedCount++;
+                }
+            });
+
+            group.hasUnpaidBalance = group.transactions.some(t => 
+                t.type === 'borrowed' && t.remainingAmount > 0
+            );
+
+            if (completedCount > 0) {
+                showNotification(`Successfully completed ${completedCount} payment(s)`, 'success');
+                updateTransactionHistory();
+                saveData();
+            }
+        }
 
         function resetBalance() {
-    if (transactions.length > 0) {
-        // Calculate total borrowed amount that's still unpaid
-        const unpaidBorrowed = transactions.reduce((sum, t) => 
-            sum + (t.type === 'borrowed' ? t.remainingAmount : 0), 0);
-        
-        const historyGroup = {
-            date: new Date().toLocaleString(),
-            initialBalance: currentBalance + transactions.reduce((sum, t) => sum + t.amount, 0),
-            transactions: [...transactions],
-            hasUnpaidBalance: unpaidBorrowed > 0
-        };
-        historicalTransactions.unshift(historyGroup);
-        updateTransactionHistory();
-    }
+            if (transactions.length > 0) {
+                const unpaidBorrowed = transactions.some(t => 
+                    t.type === 'borrowed' && t.remainingAmount > 0
+                );
+                
+                const historyGroup = {
+                    date: new Date().toLocaleString(),
+                    initialBalance: currentBalance + transactions.reduce((sum, t) => sum + t.amount, 0),
+                    transactions: [...transactions],
+                    hasUnpaidBalance: unpaidBorrowed
+                };
+                historicalTransactions.unshift(historyGroup);
+                updateTransactionHistory();
+            }
 
-    transactions = [];
-    currentBalance = 0;
-    updateBalanceDisplay();
-    updateTransactionsList();
-    saveData();
-}
+            transactions = [];
+            currentBalance = 0;
+            updateBalanceDisplay();
+            updateTransactionsList();
+            saveData();
+            showNotification('Balance reset successfully', 'success');
+        }
 
         function updateBalanceDisplay() {
             document.getElementById('currentBalance').textContent = formatCurrency(currentBalance);
         }
 
         function updateTransactionsList() {
-    const transactionsList = document.getElementById('transactionsList');
-    
-    if (transactions.length === 0) {
-        transactionsList.innerHTML = '<div class="no-transactions">No transactions yet</div>';
-        return;
-    }
+            const transactionsList = document.getElementById('transactionsList');
+            
+            if (transactions.length === 0) {
+                transactionsList.innerHTML = '<div class="no-transactions">No transactions yet</div>';
+                return;
+            }
 
-    transactionsList.innerHTML = transactions.map((transaction, index) => `
-        <div class="transaction-item">
-            <div class="transaction-main">
-                <div class="transaction-info">
-                    <div>${transaction.buyerName}</div>
-                    <div class="transaction-date">${transaction.date}</div>
-                </div>
-                <div class="transaction-amount">
-                    -${formatCurrency(transaction.amount)}
-                    <div style="color: #34a853; font-size: 12px;">+${formatCurrency(transaction.reward)} (1% reward)</div>
-                </div>
-            </div>
-            <div class="transaction-status ${transaction.type === 'paid' ? 'status-paid' : 'status-borrowed'}">
-                ${transaction.type === 'paid' ? `Paid on ${transaction.fullyPaidDate}` : 'Borrowed'}
-            </div>
-            ${transaction.type === 'borrowed' ? `
-                <div class="remaining-amount">Amount to pay: ${formatCurrency(transaction.amount)}</div>
-                <button class="paid-button" onclick="markAsPaid(${index})">Mark as Paid</button>
-            ` : ''}
-        </div>
-    `).join('');
-}
-function markAsPaid(index) {
-    const transaction = transactions[index];
-    
-    // Update transaction to paid status
-    transaction.type = 'paid';
-    transaction.remainingAmount = 0;
-    transaction.fullyPaidDate = new Date().toLocaleString();
-    
-    // Add single payment entry for full amount
-    transaction.payments = [{
-        amount: transaction.amount,
-        date: new Date().toLocaleString()
-    }];
-
-    updateTransactionsList();
-    saveData();
-}
-
-function updateTransactionHistory() {
-    const historyContainer = document.getElementById('transactionHistory');
-    
-    if (historicalTransactions.length === 0) {
-        historyContainer.innerHTML = '<div class="no-transactions">No historical transactions</div>';
-        return;
-    }
-
-    historyContainer.innerHTML = historicalTransactions.map((group, groupIndex) => `
-        <div class="history-group">
-            <div class="history-header">
-                <span>Session: ${group.date}</span>
-                <div>
-                    ${group.hasUnpaidBalance ? 
-                        '<span style="color: #d93025; margin-right: 10px;">Unpaid Balance!</span>' : ''}
-                    <button 
-                        class="complete-button" 
-                        onclick="completeHistoricalPayments(${groupIndex})"
-                        style="display: ${group.transactions.some(t => t.type === 'borrowed' && t.remainingAmount > 0) ? 'inline-block' : 'none'}"
-                    >
-                        Complete All Payments
-                    </button>
-                </div>
-            </div>
-            <div class="history-balance">Initial Balance: ${formatCurrency(group.initialBalance)}</div>
-            ${group.transactions.map(transaction => `
+            transactionsList.innerHTML = transactions.map((transaction, index) => `
                 <div class="transaction-item">
                     <div class="transaction-main">
                         <div class="transaction-info">
@@ -647,69 +562,87 @@ function updateTransactionHistory() {
                         </div>
                         <div class="transaction-amount">
                             -${formatCurrency(transaction.amount)}
-                            ${transaction.reward ? 
-                                `<div style="color: #34a853; font-size: 12px;">+${formatCurrency(transaction.reward)} (1% reward)</div>` 
-                                : ''}
+                            <div style="color: #34a853; font-size: 12px;">+${formatCurrency(transaction.reward)} (1% reward)</div>
                         </div>
                     </div>
                     <div class="transaction-status ${transaction.type === 'paid' ? 'status-paid' : 'status-borrowed'}">
-                        ${transaction.type === 'paid' ? 'Paid' : 'Borrowed'}
+                        ${transaction.type === 'paid' ? `Paid ${transaction.fullyPaidDate ? `on ${transaction.fullyPaidDate}` : ''}` : 'Borrowed'}
                     </div>
                     ${transaction.type === 'borrowed' ? `
-                        <div class="remaining-amount">Final Remaining: ${formatCurrency(transaction.remainingAmount)}</div>
-                        ${transaction.payments.map(payment => `
-                            <div class="transaction-date">Payment: ${formatCurrency(payment.amount)} on ${payment.date}</div>
-                        `).join('')}
+                        <div class="remaining-amount">Amount to pay: ${formatCurrency(transaction.remainingAmount)}</div>
+                        <button class="paid-button" onclick="markAsPaid(${index})">Mark as Paid</button>
                     ` : ''}
                 </div>
-            `).join('')}
-        </div>
-    `).join('');
-}
-
-        // Handle online/offline status
-        function updateOnlineStatus() {
-    const indicator = document.getElementById('offlineIndicator');
-    if (!indicator) return; // Guard clause in case element isn't loaded yet
-    
-    if (navigator.onLine) {
-        indicator.textContent = 'Online';
-        indicator.className = 'offline-indicator online';
-    } else {
-        indicator.textContent = 'Offline (App still working)';
-        indicator.className = 'offline-indicator offline';
-    }
-}
-
-function validateAndRepairData() {
-    transactions = transactions.map(transaction => {
-        // Ensure paid status is correct based on remaining amount
-        if (transaction.remainingAmount === 0 && transaction.type === 'borrowed') {
-            transaction.type = 'paid';
+            `).join('');
         }
-        return transaction;
-    });
-    
-    historicalTransactions = historicalTransactions.map(group => {
-        group.transactions = group.transactions.map(transaction => {
-            if (transaction.remainingAmount === 0 && transaction.type === 'borrowed') {
-                transaction.type = 'paid';
-            }
-            return transaction;
-        });
-        return group;
-    });
-    
-    saveData();
-}
 
-document.addEventListener('DOMContentLoaded', function() {
-    updateOnlineStatus();
-    loadData();
-    validateTransactions(); // Add this line
-    window.addEventListener('online', updateOnlineStatus);
-    window.addEventListener('offline', updateOnlineStatus);
-});
+        function updateTransactionHistory() {
+            const historyContainer = document.getElementById('transactionHistory');
+            
+            if (historicalTransactions.length === 0) {
+                historyContainer.innerHTML = '<div class="no-transactions">No historical transactions</div>';
+                return;
+            }
+
+            historyContainer.innerHTML = historicalTransactions.map((group, groupIndex) => {
+                const hasBorrowedTransactions = group.transactions.some(t => 
+                    t.type === 'borrowed' && t.remainingAmount > 0
+                );
+
+                return `
+                    <div class="history-group">
+                        <div class="history-header">
+                            <span>Session: ${group.date}</span>
+                            <div>
+                                ${hasBorrowedTransactions ? 
+                                    '<span style="color: #d93025; margin-right: 10px;">Unpaid Balance!</span>' : ''}
+                                ${hasBorrowedTransactions ? 
+                                    `<button class="complete-button" onclick="completeHistoricalPayments(${groupIndex})">
+                                        Complete All Payments
+                                    </button>` : ''}
+                            </div>
+                        </div>
+                        <div class="history-balance">Initial Balance: ${formatCurrency(group.initialBalance)}</div>
+                        ${group.transactions.map(transaction => `
+                            <div class="transaction-item">
+                                <div class="transaction-main">
+                                    <div class="transaction-info">
+                                        <div>${transaction.buyerName}</div>
+                                        <div class="transaction-date">${transaction.date}</div>
+                                    </div>
+                                    <div class="transaction-amount">
+                                        -${formatCurrency(transaction.amount)}
+                                        ${transaction.reward ? 
+                                            `<div style="color: #34a853; font-size: 12px;">
+                                                +${formatCurrency(transaction.reward)} (1% reward)
+                                            </div>` : ''}
+                                    </div>
+                                </div>
+                                <div class="transaction-status ${transaction.type === 'paid' ? 'status-paid' : 'status-borrowed'}">
+                                    ${transaction.type === 'paid' ? 
+                                        `Paid ${transaction.fullyPaidDate ? `on ${transaction.fullyPaidDate}` : ''}` : 
+                                        'Borrowed'}
+                                </div>
+                                ${transaction.type === 'borrowed' ? `
+                                    <div class="remaining-amount">
+                                        Final Remaining: ${formatCurrency(transaction.remainingAmount)}
+                                    </div>
+                                    ${transaction.payments.map(payment => `
+                                        <div class="transaction-date">
+                                            Payment: ${formatCurrency(payment.amount)} on ${payment.date}
+                                        </div>
+                                    `).join('')}
+                                ` : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData();
+        });
     </script>
 </body>
 </html>
