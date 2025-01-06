@@ -327,19 +327,23 @@
             const data = JSON.parse(savedData);
             currentBalance = data.currentBalance || 0;
             
-            // Ensure transactions maintain their paid status
             transactions = (data.transactions || []).map(t => ({
                 ...t,
-                type: t.remainingAmount === 0 ? 'paid' : t.type
+                type: t.type // Maintain the saved type
             }));
             
-            historicalTransactions = data.historicalTransactions || [];
+            historicalTransactions = (data.historicalTransactions || []).map(group => ({
+                ...group,
+                transactions: group.transactions.map(t => ({
+                    ...t,
+                    type: t.type // Maintain the saved type
+                }))
+            }));
             
             updateBalanceDisplay();
             updateTransactionsList();
             updateTransactionHistory();
         }
-        validateAndRepairData(); // Add validation after loading
     } catch (error) {
         console.error('Error loading data:', error);
         currentBalance = 0;
@@ -347,6 +351,7 @@
         historicalTransactions = [];
     }
 }
+
 
 function validateAndRepairData() {
     transactions = transactions.map(transaction => {
@@ -383,13 +388,30 @@ document.addEventListener('DOMContentLoaded', function() {
 });
         // Save data to localStorage
         function saveData() {
-            const data = {
-                currentBalance,
-                transactions,
-                historicalTransactions
-            };
-            localStorage.setItem('balanceTrackerData', JSON.stringify(data));
-        }
+    try {
+        // Validate transactions before saving
+        const validatedTransactions = transactions.map(t => 
+            t.remainingAmount === 0 ? { ...t, type: 'paid' } : t
+        );
+
+        const validatedHistoricalTransactions = historicalTransactions.map(group => ({
+            ...group,
+            transactions: group.transactions.map(t => 
+                t.remainingAmount === 0 ? { ...t, type: 'paid' } : t
+            )
+        }));
+
+        const data = {
+            currentBalance,
+            transactions: validatedTransactions,
+            historicalTransactions: validatedHistoricalTransactions
+        };
+        
+        localStorage.setItem('balanceTrackerData', JSON.stringify(data));
+    } catch (error) {
+        console.error('Error saving data:', error);
+    }
+}
 
         function formatCurrency(amount) {
             return '₱' + amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
@@ -432,11 +454,6 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
 
-    if (amount > currentBalance) {
-        alert('Transaction amount cannot exceed current balance');
-        return;
-    }
-
     const transaction = {
         buyerName,
         amount,
@@ -445,6 +462,11 @@ document.addEventListener('DOMContentLoaded', function() {
         remainingAmount: transactionType.value === 'borrowed' ? amount : 0,
         payments: []
     };
+
+    // Ensure type is set correctly based on remainingAmount
+    if (transaction.remainingAmount === 0) {
+        transaction.type = 'paid';
+    }
 
     const reward = amount * 0.01;
     currentBalance = currentBalance - amount + reward;
@@ -455,73 +477,66 @@ document.addEventListener('DOMContentLoaded', function() {
     updateTransactionsList();
     saveData();
 
-    // Reset all input fields
+    // Reset inputs
     buyerNameInput.value = '';
     amountInput.value = '';
     transactionType.selectedIndex = 0;
-    
-    // Set focus back to buyer name field
     buyerNameInput.focus();
 }
 
 
-        function togglePaymentForm(index) {
-            const form = document.getElementById(`paymentForm-${index}`);
-            form.style.display = form.style.display === 'none' ? 'block' : 'none';
+function validateTransactions() {
+    // Validate current transactions
+    transactions = transactions.map(transaction => {
+        if (transaction.remainingAmount === 0) {
+            return {
+                ...transaction,
+                type: 'paid'
+            };
         }
-
-        function makePayment(index) {
-    const paymentAmount = parseFloat(document.getElementById(`paymentAmount-${index}`).value);
-    const transaction = transactions[index];
-
-    if (isNaN(paymentAmount) || paymentAmount <= 0) {
-        alert('Please enter a valid payment amount');
-        return;
-    }
-
-    if (paymentAmount > transaction.remainingAmount) {
-        alert('Payment amount cannot exceed remaining balance');
-        return;
-    }
-
-    transaction.remainingAmount -= paymentAmount;
-    transaction.payments.push({
-        amount: paymentAmount,
-        date: new Date().toLocaleString()
+        return transaction;
     });
 
-    // Mark as paid if fully paid
-    if (transaction.remainingAmount === 0) {
-        transaction.type = 'paid';
-        transaction.fullyPaidDate = new Date().toLocaleString(); // Add paid date for tracking
+    // Validate historical transactions
+    historicalTransactions = historicalTransactions.map(group => ({
+        ...group,
+        transactions: group.transactions.map(transaction => {
+            if (transaction.remainingAmount === 0) {
+                return {
+                    ...transaction,
+                    type: 'paid'
+                };
+            }
+            return transaction;
+        })
+    }));
+
+    // Save the validated data
+    saveData();
+}
+
+function completeHistoricalPayments(groupIndex) {
+    const group = historicalTransactions[groupIndex];
+    const borrowedTransactions = group.transactions.filter(t => t.type === 'borrowed' && t.remainingAmount > 0);
+    
+    if (borrowedTransactions.length === 0) {
+        alert('No pending borrowed transactions in this session');
+        return;
     }
 
-    updateTransactionsList();
-    togglePaymentForm(index);
-    saveData(); // Make sure to save after updating
+    borrowedTransactions.forEach(transaction => {
+        transaction.type = 'paid';
+        transaction.fullyPaidDate = new Date().toLocaleString();
+        transaction.payments.push({
+            amount: transaction.remainingAmount,
+            date: new Date().toLocaleString()
+        });
+        transaction.remainingAmount = 0;
+    });
+
+    updateTransactionHistory();
+    saveData(); // Save the updated state
 }
-        function completeHistoricalPayments(groupIndex) {
-            const group = historicalTransactions[groupIndex];
-            const borrowedTransactions = group.transactions.filter(t => t.type === 'borrowed' && t.remainingAmount > 0);
-            
-            if (borrowedTransactions.length === 0) {
-                alert('No pending borrowed transactions in this session');
-                return;
-            }
-
-            borrowedTransactions.forEach(transaction => {
-                transaction.type = 'paid';
-                transaction.payments.push({
-                    amount: transaction.remainingAmount,
-                    date: new Date().toLocaleString()
-                });
-                transaction.remainingAmount = 0;
-            });
-
-            updateTransactionHistory();
-            saveData();
-        }
-
 
         function resetBalance() {
     if (transactions.length > 0) {
@@ -571,21 +586,31 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             </div>
             <div class="transaction-status ${transaction.type === 'paid' ? 'status-paid' : 'status-borrowed'}">
-                ${transaction.type === 'paid' ? 'Paid' : 'Borrowed'}
+                ${transaction.type === 'paid' ? `Paid on ${transaction.fullyPaidDate}` : 'Borrowed'}
             </div>
             ${transaction.type === 'borrowed' ? `
-                <div class="remaining-amount">Remaining: ${formatCurrency(transaction.remainingAmount)}</div>
-                <button class="borrowed-button" onclick="togglePaymentForm(${index})">Make Payment</button>
-                <div id="paymentForm-${index}" class="payment-form">
-                    <input type="number" id="paymentAmount-${index}" placeholder="Enter payment amount">
-                    <button class="paid-button" onclick="makePayment(${index})">Submit Payment</button>
-                </div>
-                ${transaction.payments.map(payment => `
-                    <div class="transaction-date">Payment: ${formatCurrency(payment.amount)} on ${payment.date}</div>
-                `).join('')}
+                <div class="remaining-amount">Amount to pay: ${formatCurrency(transaction.amount)}</div>
+                <button class="paid-button" onclick="markAsPaid(${index})">Mark as Paid</button>
             ` : ''}
         </div>
     `).join('');
+}
+function markAsPaid(index) {
+    const transaction = transactions[index];
+    
+    // Update transaction to paid status
+    transaction.type = 'paid';
+    transaction.remainingAmount = 0;
+    transaction.fullyPaidDate = new Date().toLocaleString();
+    
+    // Add single payment entry for full amount
+    transaction.payments = [{
+        amount: transaction.amount,
+        date: new Date().toLocaleString()
+    }];
+
+    updateTransactionsList();
+    saveData();
 }
 
 function updateTransactionHistory() {
@@ -678,15 +703,10 @@ function validateAndRepairData() {
     saveData();
 }
 
-        document.addEventListener('DOMContentLoaded', function() {
-    // Initialize online status immediately
+document.addEventListener('DOMContentLoaded', function() {
     updateOnlineStatus();
-    
-
-    // Load data after DOM is ready
     loadData();
-    
-    // Add event listeners for online/offline status
+    validateTransactions(); // Add this line
     window.addEventListener('online', updateOnlineStatus);
     window.addEventListener('offline', updateOnlineStatus);
 });
