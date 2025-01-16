@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Balance Tracker</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+    
     <style>
         * {
             margin: 0;
@@ -576,6 +577,65 @@ canvas {
     width: 100% !important;
     height: 100% !important;
 }
+.notification-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    z-index: 1001;
+    max-width: 90%;
+    width: 400px;
+}
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+}
+
+.notification-title {
+    color: #1a73e8;
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 15px;
+}
+
+.notification-content {
+    margin-bottom: 20px;
+    line-height: 1.5;
+}
+
+.notification-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.notification-confirm {
+    background: #1a73e8;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.notification-cancel {
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 5px;
+    cursor: pointer;
+}
     </style>
 </head>
 <body>
@@ -751,6 +811,43 @@ function checkAndResetDailyProgress() {
         let currentBalance = 0;
         let transactions = [];
         let historicalTransactions = [];
+
+        function showConfirmationModal(title, message, onConfirm) {
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    
+    const modal = document.createElement('div');
+    modal.className = 'notification-modal';
+    
+    modal.innerHTML = `
+        <div class="notification-title">${title}</div>
+        <div class="notification-content">${message}</div>
+        <div class="notification-buttons">
+            <button class="notification-cancel">Cancel</button>
+            <button class="notification-confirm">Confirm</button>
+        </div>
+    `;
+    
+    document.body.appendChild(overlay);
+    document.body.appendChild(modal);
+    
+    const confirmBtn = modal.querySelector('.notification-confirm');
+    const cancelBtn = modal.querySelector('.notification-cancel');
+    
+    const closeModal = () => {
+        overlay.remove();
+        modal.remove();
+    };
+    
+    confirmBtn.addEventListener('click', () => {
+        closeModal();
+        onConfirm();
+    });
+    
+    cancelBtn.addEventListener('click', closeModal);
+    overlay.addEventListener('click', closeModal);
+}
+
 
 
         function showSection(sectionName) {
@@ -996,14 +1093,18 @@ function setInitialBalance() {
         return;
     }
 
-    // Confirmation message
-    const confirmMessage = `Are you sure you want to set the initial balance to ${formatCurrency(amount)}?\n\n` +
-        `This will:\n` +
-        `• Clear all current transactions\n` +
-        `• Set your balance to exactly ${formatCurrency(amount)}\n\n` +
-        `This action cannot be undone.`;
+    const message = `
+        Are you sure you want to set the initial balance to ${formatCurrency(amount)}?
+        <br><br>
+        This will:
+        <br>
+        • Clear all current transactions<br>
+        • Set your balance to exactly ${formatCurrency(amount)}
+        <br><br>
+        This action cannot be undone.
+    `;
 
-    if (confirm(confirmMessage)) {
+    showConfirmationModal('Set Initial Balance', message, () => {
         currentBalance = roundToTwoDecimals(amount);
         updateBalanceDisplay();
         initialBalanceInput.value = '';
@@ -1012,10 +1113,7 @@ function setInitialBalance() {
         updateTransactionsList();
         saveData();
         showNotification('Initial balance set successfully', 'success');
-    } else {
-        showNotification('Set initial balance cancelled', 'warning');
-        initialBalanceInput.value = '';
-    }
+    });
 }
 
 
@@ -1207,53 +1305,44 @@ function markAsPaid(index) {
     saveData();
     showNotification('Transaction marked as paid', 'success');
 }
-        function resetBalance() {
-    // First confirmation
-    const firstConfirm = confirm('Are you sure you want to reset the balance? This will archive all current transactions.');
+function resetBalance() {
+    const currentTransactionsCount = transactions.length;
+    const unpaidTransactions = transactions.filter(t => t.type === 'borrowed' && t.remainingAmount > 0).length;
     
-    if (firstConfirm) {
-        // Second confirmation with more details
-        const currentTransactionsCount = transactions.length;
-        const unpaidTransactions = transactions.filter(t => t.type === 'borrowed' && t.remainingAmount > 0).length;
-        
-        const secondConfirmMessage = `Please confirm one more time:\n\n` +
-            `• This will archive ${currentTransactionsCount} transactions\n` +
-            `• There are ${unpaidTransactions} unpaid borrowed transactions\n` +
-            `• Current balance of ${formatCurrency(currentBalance)} will be reset to ₱0.00\n\n` +
-            `Do you really want to proceed?`;
+    const message = `
+        Please confirm that you want to reset the balance:
+        <br><br>
+        • This will archive ${currentTransactionsCount} transactions<br>
+        • There are ${unpaidTransactions} unpaid borrowed transactions<br>
+        • Current balance of ${formatCurrency(currentBalance)} will be reset to ₱0.00
+        <br><br>
+        Do you really want to proceed?
+    `;
+
+    showConfirmationModal('Reset Balance', message, () => {
+        if (transactions.length > 0) {
+            const unpaidBorrowed = transactions.some(t => 
+                t.type === 'borrowed' && t.remainingAmount > 0
+            );
             
-        const secondConfirm = confirm(secondConfirmMessage);
-        
-        if (secondConfirm) {
-            if (transactions.length > 0) {
-                const unpaidBorrowed = transactions.some(t => 
-                    t.type === 'borrowed' && t.remainingAmount > 0
-                );
-                
-                const historyGroup = {
-                    date: new Date().toLocaleString(),
-                    initialBalance: currentBalance + transactions.reduce((sum, t) => sum + t.amount, 0),
-                    transactions: [...transactions],
-                    hasUnpaidBalance: unpaidBorrowed
-                };
-                historicalTransactions.unshift(historyGroup);
-                updateTransactionHistory();
-            }
-
-            transactions = [];
-            currentBalance = 0;
-            updateBalanceDisplay();
-            updateTransactionsList();
-            saveData();
-            showNotification('Balance reset successfully', 'success');
-        } else {
-            showNotification('Reset balance cancelled', 'warning');
+            const historyGroup = {
+                date: new Date().toLocaleString(),
+                initialBalance: currentBalance + transactions.reduce((sum, t) => sum + t.amount, 0),
+                transactions: [...transactions],
+                hasUnpaidBalance: unpaidBorrowed
+            };
+            historicalTransactions.unshift(historyGroup);
+            updateTransactionHistory();
         }
-    } else {
-        showNotification('Reset balance cancelled', 'warning');
-    }
-}
 
+        transactions = [];
+        currentBalance = 0;
+        updateBalanceDisplay();
+        updateTransactionsList();
+        saveData();
+        showNotification('Balance reset successfully', 'success');
+    });
+}
 
         function updateBalanceDisplay() {
             document.getElementById('currentBalance').textContent = formatCurrency(currentBalance);
