@@ -280,9 +280,252 @@
             42% { transform: scale(1.3); }
             70% { transform: scale(1); }
         }
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            display: flex;
+            justify-content: space-around;
+            padding: 10px;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #5f6368;
+            text-decoration: none;
+            font-size: 12px;
+        }
+
+        .nav-item.active {
+            color: #1a73e8;
+        }
+
+        .nav-icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+
+        .section {
+            display: none;
+            margin-bottom: 60px; /* Space for bottom nav */
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .rankings-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .ranking-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #dadce0;
+            background: white;
+            margin-bottom: 10px;
+            border-radius: 8px;
+        }
+
+        .ranking-position {
+            font-size: 18px;
+            font-weight: bold;
+            color: #1a73e8;
+            margin-right: 15px;
+        }
+
+        .progress-card {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .progress-title {
+            font-weight: bold;
+            color: #1a73e8;
+            margin-bottom: 10px;
+        }
+
+        .progress-bar {
+            height: 10px;
+            background: #e8f0fe;
+            border-radius: 5px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #1a73e8;
+            transition: width 0.3s ease;
+        }
+
+        .chart-container {
+            margin-top: 20px;
+            height: 300px;
+            position: relative;
+        }
+
+        body {
+            padding-bottom: 70px; /* Space for bottom nav */
+        }
+        .loading-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: linear-gradient(135deg, #1a73e8, #0d47a1);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    color: white;
+    transition: opacity 0.5s ease-out;
+    padding: 1rem;
+}
+
+.animation-container {
+    text-align: center;
+    position: relative;
+    max-width: 90vw;
+}
+
+.welcome-text {
+    font-size: clamp(1.5rem, 5vw, 2.8rem);
+    font-weight: bold;
+    margin-bottom: 2em;
+    white-space: normal;
+    word-wrap: break-word;
+}
+
+@media (min-width: 768px) {
+    .welcome-text {
+        white-space: nowrap;
+    }
+}
+
+.welcome-text span {
+    display: inline-block;
+    opacity: 0;
+    animation: bounceIn 0.5s ease forwards;
+}
+
+.loading-message {
+    font-size: clamp(1rem, 3vw, 1.2rem);
+    margin-top: 2em;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: floatUp 0.8s ease forwards 1.8s;
+    line-height: 1.5;
+    text-align: center;
+}
+
+/* Apply different delays to each letter */
+.welcome-text span:nth-child(1) { animation-delay: 0.1s; }
+.welcome-text span:nth-child(2) { animation-delay: 0.2s; }
+.welcome-text span:nth-child(3) { animation-delay: 0.3s; }
+.welcome-text span:nth-child(4) { animation-delay: 0.4s; }
+.welcome-text span:nth-child(5) { animation-delay: 0.5s; }
+.welcome-text span:nth-child(6) { animation-delay: 0.6s; }
+.welcome-text span:nth-child(7) { animation-delay: 0.7s; }
+.welcome-text span:nth-child(8) { animation-delay: 0.8s; }
+.welcome-text span:nth-child(9) { animation-delay: 0.9s; }
+.welcome-text span:nth-child(10) { animation-delay: 1.0s; }
+.welcome-text span:nth-child(11) { animation-delay: 1.1s; }
+.welcome-text span:nth-child(12) { animation-delay: 1.2s; }
+.welcome-text span:nth-child(13) { animation-delay: 1.3s; }
+.welcome-text span:nth-child(14) { animation-delay: 1.4s; }
+.welcome-text span:nth-child(15) { animation-delay: 1.5s; }
+.welcome-text span:nth-child(16) { animation-delay: 1.6s; }
+.welcome-text span:nth-child(17) { animation-delay: 1.7s; }
+
+@keyframes bounceIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.3) rotate(-45deg);
+    }
+    50% {
+        transform: scale(1.2) rotate(10deg);
+    }
+    70% {
+        transform: scale(0.9) rotate(-5deg);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1) rotate(0);
+    }
+}
+
+@keyframes floatUp {
+    0% {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    50% {
+        opacity: 0.5;
+        transform: translateY(-10px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.loading-screen.hide {
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Handle very small screens */
+@media (max-height: 400px) {
+    .welcome-text {
+        margin-bottom: 1em;
+    }
+    .loading-message {
+        margin-top: 1em;
+    }
+}
     </style>
 </head>
 <body>
+    <div id="loadingScreen" class="loading-screen">
+        <div class="animation-container">
+            <div class="welcome-text">
+                <span>W</span>
+                <span>e</span>
+                <span>l</span>
+                <span>c</span>
+                <span>o</span>
+                <span>m</span>
+                <span>e</span>
+                <span>&nbsp;</span>
+                <span>T</span>
+                <span>P</span>
+                <span>C</span>
+                <span>&nbsp;</span>
+                <span>u</span>
+                <span>s</span>
+                <span>e</span>
+                <span>r</span>
+                <span>!</span>
+            </div>
+            <div class="loading-message">
+                Message Kerby to suggest your ideas <br>
+                to improve your experiences 😊
+            </div>
+        </div>
+    </div>
     <div id="offlineIndicator" class="offline-indicator">Loading...</div>
     <div class="container">
         <h1>Balance Tracker</h1>
@@ -297,7 +540,7 @@
             <input type="number" id="initialBalance" placeholder="Enter initial balance">
             <button onclick="setInitialBalance()">Set Balance</button>
         </div>
-
+        <div id="homeSection" class="section active">
         <div class="form-group">
             <label>Buyer Name</label>
             <input type="text" id="buyerName" placeholder="Enter buyer name">
@@ -307,7 +550,7 @@
             <label>Amount</label>
             <input type="number" id="amount" placeholder="Enter amount">
         </div>
-
+        
         <div class="form-group">
             <label>Transaction Type</label>
             <select id="transactionType">
@@ -315,8 +558,10 @@
                 <option value="borrowed">Borrowed</option>
             </select>
         </div>
+        
+        <button id="addTransactionBtn" onclick="addTransaction()">Add Transaction</button>
 
-        <button onclick="addTransaction()">Add Transaction</button>
+        
         <button onclick="resetBalance()" class="reset-button">Reset Balance</button>
 
         <div class="transactions" id="transactionsList">
@@ -328,16 +573,230 @@
         <h2>Transaction History</h2>
         <div id="transactionHistory"></div>
     </div>
+    </div>
 
+    <div id="rankingsSection" class="section">
+        <div class="container">
+            <h1>Top Buyers Rankings</h1>
+            <div id="rankingsList" class="rankings-list">
+                <!-- Rankings will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Section -->
+    <div id="progressSection" class="section">
+        <div class="container">
+            <h1>Progress Overview</h1>
+            
+            <div class="progress-card">
+                <div class="progress-title">Total Income</div>
+                <div id="totalIncome" class="balance">₱0.00</div>
+            </div>
+
+            <div class="progress-card">
+                <div class="progress-title">Daily Income Progress</div>
+                <div class="progress-bar">
+                    <div id="dailyProgress" class="progress-fill" style="width: 0%"></div>
+                </div>
+                <div id="dailyIncomeText">₱0.00 / ₱1,000 target</div>
+            </div>
+
+            <div class="progress-card">
+                <div class="progress-title">Monthly Statistics</div>
+                <div id="monthlyStats">
+                    <!-- Monthly stats will be populated here -->
+                </div>
+                <div class="chart-container" id="monthlyChart">
+                    <!-- Chart will be rendered here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <div class="bottom-nav">
+        <a href="#" class="nav-item active" onclick="showSection('home')">
+            <span class="nav-icon">🏠</span>
+            <span>Home</span>
+        </a>
+        <a href="#" class="nav-item" onclick="showSection('rankings')">
+            <span class="nav-icon">🏆</span>
+            <span>Rankings</span>
+        </a>
+        <a href="#" class="nav-item" onclick="showSection('progress')">
+            <span class="nav-icon">📈</span>
+            <span>Progress</span>
+        </a>
+    </div>
     <div class="footer">
         Made by Kerby with <span>♥</span>
     </div>
 
     <script>
+let dailyStats = {
+    date: new Date().toDateString(),
+    total: 0,
+    transactions: []
+};
+
+// Add this function to handle daily stats reset
+function checkAndResetDailyProgress() {
+    const today = new Date().toDateString();
+    
+    // If it's a new day, reset the daily stats
+    if (dailyStats.date !== today) {
+        // Save the old stats to history if needed
+        const oldStats = { ...dailyStats };
+        
+        // Reset daily stats
+        dailyStats = {
+            date: today,
+            total: 0,
+            transactions: []
+        };
+        
+        // Save to localStorage
+        saveData();
+    }
+}
+
+
         let currentBalance = 0;
         let transactions = [];
         let historicalTransactions = [];
 
+
+        function showSection(sectionName) {
+            // Hide all sections
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // Show selected section
+            document.getElementById(sectionName + 'Section').classList.add('active');
+            
+            // Update navigation highlighting
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.currentTarget.classList.add('active');
+            
+            // Update relevant data
+            if (sectionName === 'rankings') {
+                updateRankings();
+            } else if (sectionName === 'progress') {
+                updateProgress();
+            }
+        }
+
+        function updateRankings() {
+            const buyerStats = {};
+            
+            // Combine current and historical transactions
+            const allTransactions = [
+                ...transactions,
+                ...historicalTransactions.flatMap(group => group.transactions)
+            ];
+            
+            // Calculate total amount spent by each buyer
+            allTransactions.forEach(transaction => {
+                if (!buyerStats[transaction.buyerName]) {
+                    buyerStats[transaction.buyerName] = {
+                        totalSpent: 0,
+                        transactions: 0
+                    };
+                }
+                buyerStats[transaction.buyerName].totalSpent += transaction.amount;
+                buyerStats[transaction.buyerName].transactions++;
+            });
+            
+            // Convert to array and sort
+            const rankings = Object.entries(buyerStats)
+                .map(([name, stats]) => ({
+                    name,
+                    ...stats
+                }))
+                .sort((a, b) => b.totalSpent - a.totalSpent);
+            
+            // Update UI
+            const rankingsList = document.getElementById('rankingsList');
+            rankingsList.innerHTML = rankings.map((buyer, index) => `
+                <div class="ranking-item">
+                    <div class="ranking-info">
+                        <span class="ranking-position">#${index + 1}</span>
+                        <span>${buyer.name}</span>
+                    </div>
+                    <div class="ranking-stats">
+                        <div>${formatCurrency(buyer.totalSpent)}</div>
+                        <div style="font-size: 12px; color: #5f6368;">
+                            ${buyer.transactions} transactions
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateProgress() {
+    // Calculate total income (keep existing code)
+    const totalIncome = historicalTransactions.reduce((sum, group) => 
+        sum + group.transactions.reduce((groupSum, t) => groupSum + t.amount, 0), 0
+    ) + transactions.reduce((sum, t) => sum + t.amount, 0);
+    
+    document.getElementById('totalIncome').textContent = formatCurrency(totalIncome);
+    
+    // Use dailyStats for daily progress
+    const dailyTotal = dailyStats.total;
+    const dailyTarget = 1000; // You can make this configurable
+    const dailyProgress = Math.min((dailyTotal / dailyTarget) * 100, 100);
+    
+    document.getElementById('dailyProgress').style.width = `${dailyProgress}%`;
+    document.getElementById('dailyIncomeText').textContent = 
+        `${formatCurrency(dailyTotal)} / ${formatCurrency(dailyTarget)} target`;
+    
+    // Add daily transactions count
+    const dailyTransactionsCount = dailyStats.transactions.length;
+    document.getElementById('monthlyStats').innerHTML = `
+        <div style="margin: 10px 0;">
+            <div>Today's Transactions: ${dailyTransactionsCount}</div>
+            <div>Today's Income: ${formatCurrency(dailyTotal)}</div>
+            <div>Progress to Daily Target: ${dailyProgress.toFixed(1)}%</div>
+        </div>
+        ${document.getElementById('monthlyStats').innerHTML}
+    `;
+    
+    // Update monthly statistics
+    updateMonthlyStats();
+}
+
+// Add an interval to check for day changes
+setInterval(checkAndResetDailyProgress, 60000); // Check every minute
+
+        function updateMonthlyStats() {
+            const currentMonth = new Date().getMonth();
+            const currentYear = new Date().getFullYear();
+            
+            // Filter transactions for current month
+            const monthlyTransactions = [...transactions, 
+                ...historicalTransactions.flatMap(group => group.transactions)
+            ].filter(t => {
+                const tDate = new Date(t.date);
+                return tDate.getMonth() === currentMonth && 
+                       tDate.getFullYear() === currentYear;
+            });
+            
+            const monthlyTotal = monthlyTransactions.reduce((sum, t) => sum + t.amount, 0);
+            const monthlyCount = monthlyTransactions.length;
+            const averageTransaction = monthlyCount > 0 ? monthlyTotal / monthlyCount : 0;
+            
+            document.getElementById('monthlyStats').innerHTML = `
+                <div style="margin: 10px 0;">
+                    <div>Total Transactions: ${monthlyCount}</div>
+                    <div>Total Amount: ${formatCurrency(monthlyTotal)}</div>
+                    <div>Average Transaction: ${formatCurrency(averageTransaction)}</div>
+                </div>
+            `;
+        }
         function roundToTwoDecimals(number) {
             return Math.floor(number * 100) / 100;
         }
@@ -365,18 +824,19 @@
         }
 
         function saveData() {
-            try {
-                const data = {
-                    currentBalance,
-                    transactions,
-                    historicalTransactions
-                };
-                localStorage.setItem('balanceTrackerData', JSON.stringify(data));
-            } catch (error) {
-                console.error('Error saving data:', error);
-                showNotification('Error saving data', 'error');
-            }
-        }
+    try {
+        const data = {
+            currentBalance,
+            transactions,
+            historicalTransactions,
+            dailyStats  // Add this line
+        };
+        localStorage.setItem('balanceTrackerData', JSON.stringify(data));
+    } catch (error) {
+        console.error('Error saving data:', error);
+        showNotification('Error saving data', 'error');
+    }
+}
 
         function deleteBatch(groupIndex) {
             if (confirm('Are you sure you want to delete this batch? This action cannot be undone.')) {
@@ -387,90 +847,69 @@
             }
         }
 
+        showNotification('Initial balance set successfully', 'success');
         function setInitialBalance() {
-            const initialBalanceInput = document.getElementById('initialBalance');
-            const amount = parseFloat(initialBalanceInput.value);
-            
-            if (isNaN(amount) || amount < 0) {
-                showNotification('Please enter a valid amount', 'error');
-                return;
-            }
+    const initialBalanceInput = document.getElementById('initialBalance');
+    const amount = parseFloat(initialBalanceInput.value);
+    
+    if (isNaN(amount) || amount < 0) {
+        showNotification('Please enter a valid amount', 'error');
+        return;
+    }
 
-            currentBalance = roundToTwoDecimals(amount);
-            updateBalanceDisplay();
-            initialBalanceInput.value = '';
-            
-            transactions = [];
-            updateTransactionsList();
-            saveData();
-            showNotification('Initial balance set successfully', 'success');
-        }
+    // Confirmation message
+    const confirmMessage = `Are you sure you want to set the initial balance to ${formatCurrency(amount)}?\n\n` +
+        `This will:\n` +
+        `• Clear all current transactions\n` +
+        `• Set your balance to exactly ${formatCurrency(amount)}\n\n` +
+        `This action cannot be undone.`;
 
-        function addTransaction() {
-            const buyerNameInput = document.getElementById('buyerName');
-            const amountInput = document.getElementById('amount');
-            const transactionType = document.getElementById('transactionType');
-            
-            const buyerName = buyerNameInput.value.trim();
-            const amount = parseFloat(amountInput.value);
+    if (confirm(confirmMessage)) {
+        currentBalance = roundToTwoDecimals(amount);
+        updateBalanceDisplay();
+        initialBalanceInput.value = '';
+        
+        transactions = [];
+        updateTransactionsList();
+        saveData();
+        showNotification('Initial balance set successfully', 'success');
+    } else {
+        showNotification('Set initial balance cancelled', 'warning');
+        initialBalanceInput.value = '';
+    }
+}
 
-            if (!buyerName) {
-                showNotification('Please enter a buyer name', 'error');
-                return;
-            }
+function setInitialBalance() {
+    const initialBalanceInput = document.getElementById('initialBalance');
+    const amount = parseFloat(initialBalanceInput.value);
+    
+    if (isNaN(amount) || amount < 0) {
+        showNotification('Please enter a valid amount', 'error');
+        return;
+    }
 
-            if (isNaN(amount) || amount <= 0) {
-                showNotification('Please enter a valid amount', 'error');
-                return;
-            }
+    // Confirmation message
+    const confirmMessage = `Are you sure you want to set the initial balance to ${formatCurrency(amount)}?\n\n` +
+        `This will:\n` +
+        `• Clear all current transactions\n` +
+        `• Set your balance to exactly ${formatCurrency(amount)}\n\n` +
+        `This action cannot be undone.`;
 
-            if (amount > currentBalance && transactionType.value === 'paid') {
-                showNotification('Amount exceeds current balance', 'error');
-                return;
-            }
+    if (confirm(confirmMessage)) {
+        currentBalance = roundToTwoDecimals(amount);
+        updateBalanceDisplay();
+        initialBalanceInput.value = '';
+        
+        transactions = [];
+        updateTransactionsList();
+        saveData();
+        showNotification('Initial balance set successfully', 'success');
+    } else {
+        showNotification('Set initial balance cancelled', 'warning');
+        initialBalanceInput.value = '';
+    }
+}
 
-            const transaction = {
-                buyerName,
-                amount,
-                date: new Date().toLocaleString(),
-                type: transactionType.value,
-                remainingAmount: transactionType.value === 'borrowed' ? amount : 0,
-                payments: []
-            };
-
-            const reward = Math.floor(amount * 0.005 * 100) / 100;
-            currentBalance = roundToTwoDecimals(currentBalance - amount + reward);
-            transaction.reward = reward;
-
-            transactions.unshift(transaction);
-            updateBalanceDisplay();
-            updateTransactionsList();
-            saveData();
-
-            buyerNameInput.value = '';
-            amountInput.value = '';
-            transactionType.selectedIndex = 0;
-            buyerNameInput.focus();
-
-            showNotification('Transaction added successfully', 'success');
-        }
-
-        function markAsPaid(index) {
-            const transaction = transactions[index];
-            
-            transaction.type = 'paid';
-            transaction.remainingAmount = 0;
-            transaction.fullyPaidDate = new Date().toLocaleString();
-            
-            transaction.payments = [{
-                amount: transaction.amount,
-                date: new Date().toLocaleString()
-            }];
-
-            updateTransactionsList();
-            saveData();
-            showNotification('Transaction marked as paid', 'success');
-        }
 
         function completeHistoricalPayments(groupIndex) {
             const group = historicalTransactions[groupIndex];
@@ -512,8 +951,172 @@
                 saveData();
             }
         }
+        function addTransaction() {
+    const buyerNameInput = document.getElementById('buyerName');
+    const amountInput = document.getElementById('amount');
+    const transactionType = document.getElementById('transactionType');
+    
+    const buyerName = buyerNameInput.value.trim();
+    const amount = parseFloat(amountInput.value);
+    
+    // Consistent 1% reward calculation
+    const reward = Math.floor(amount * 0.01 * 100) / 100;
+    
+    // Calculate final impact on balance (amount minus reward)
+    const netAmount = roundToTwoDecimals(amount - reward);
 
+    if (!buyerName) {
+        showNotification('Please enter a buyer name', 'error');
+        return;
+    }
+
+    if (isNaN(amount) || amount <= 0) {
+        showNotification('Please enter a valid amount', 'error');
+        return;
+    }
+
+    // Enhanced balance validation for both transaction types
+    if (netAmount > currentBalance) {
+        showNotification(`Insufficient balance. Current balance: ${formatCurrency(currentBalance)}`, 'error');
+        return;
+    }
+
+    // Check if we need to reset daily progress
+    checkAndResetDailyProgress();
+
+    const transaction = {
+        buyerName,
+        amount,
+        date: new Date().toLocaleString(),
+        type: transactionType.value,
+        remainingAmount: transactionType.value === 'borrowed' ? amount : 0,
+        payments: [],
+        reward: reward
+    };
+
+    // Update balance for both paid and borrowed transactions
+    currentBalance = roundToTwoDecimals(currentBalance - amount + reward);
+
+    // Add to daily stats for both transaction types
+    dailyStats.total += amount;
+    dailyStats.transactions.push({
+        buyerName,
+        amount,
+        date: new Date().toLocaleString(),
+        reward,
+        type: transactionType.value
+    });
+
+    transactions.unshift(transaction);
+    updateBalanceDisplay();
+    updateTransactionsList();
+    updateProgress();
+    updateRankings();
+    saveData();
+
+    // Clear form
+    buyerNameInput.value = '';
+    amountInput.value = '';
+    transactionType.selectedIndex = 0;
+    buyerNameInput.focus();
+
+    showNotification('Transaction added successfully', 'success');
+}
+
+function checkAndResetDailyProgress() {
+    try {
+        const today = new Date().toDateString();
+        
+        // If it's a new day, reset the daily stats
+        if (dailyStats.date !== today) {
+            // Save the old stats to history if needed
+            const oldStats = { ...dailyStats };
+            
+            // Reset daily stats
+            dailyStats = {
+                date: today,
+                total: 0,
+                transactions: []
+            };
+            
+            // Save to localStorage
+            saveData();
+        }
+    } catch (error) {
+        console.error('Error in daily progress reset:', error);
+        // Initialize new daily stats if there's an error
+        dailyStats = {
+            date: new Date().toDateString(),
+            total: 0,
+            transactions: []
+        };
+        saveData();
+    }
+}
+
+// 2. Add data validation for loaded transactions
+function validateLoadedData(data) {
+    if (!data) return false;
+    
+    // Validate and repair transaction objects
+    if (Array.isArray(data.transactions)) {
+        data.transactions = data.transactions.map(transaction => ({
+            buyerName: transaction.buyerName || 'Unknown',
+            amount: parseFloat(transaction.amount) || 0,
+            date: transaction.date || new Date().toLocaleString(),
+            type: ['paid', 'borrowed'].includes(transaction.type) ? transaction.type : 'paid',
+            remainingAmount: parseFloat(transaction.remainingAmount) || 0,
+            reward: parseFloat(transaction.reward) || 0,
+            payments: Array.isArray(transaction.payments) ? transaction.payments : []
+        }));
+    } else {
+        data.transactions = [];
+    }
+
+    // Validate current balance
+    data.currentBalance = parseFloat(data.currentBalance) || 0;
+
+    return data;
+}
+
+// Also update the markAsPaid function to avoid double-rewarding
+function markAsPaid(index) {
+    const transaction = transactions[index];
+    
+    // No need to calculate new reward since it was already given
+    transaction.type = 'paid';
+    transaction.remainingAmount = 0;
+    transaction.fullyPaidDate = new Date().toLocaleString();
+    
+    transaction.payments = [{
+        amount: transaction.amount,
+        date: new Date().toLocaleString()
+    }];
+
+    updateBalanceDisplay();
+    updateTransactionsList();
+    updateProgress();
+    saveData();
+    showNotification('Transaction marked as paid', 'success');
+}
         function resetBalance() {
+    // First confirmation
+    const firstConfirm = confirm('Are you sure you want to reset the balance? This will archive all current transactions.');
+    
+    if (firstConfirm) {
+        // Second confirmation with more details
+        const currentTransactionsCount = transactions.length;
+        const unpaidTransactions = transactions.filter(t => t.type === 'borrowed' && t.remainingAmount > 0).length;
+        
+        const secondConfirmMessage = `Please confirm one more time:\n\n` +
+            `• This will archive ${currentTransactionsCount} transactions\n` +
+            `• There are ${unpaidTransactions} unpaid borrowed transactions\n` +
+            `• Current balance of ${formatCurrency(currentBalance)} will be reset to ₱0.00\n\n` +
+            `Do you really want to proceed?`;
+            
+        const secondConfirm = confirm(secondConfirmMessage);
+        
+        if (secondConfirm) {
             if (transactions.length > 0) {
                 const unpaidBorrowed = transactions.some(t => 
                     t.type === 'borrowed' && t.remainingAmount > 0
@@ -535,107 +1138,114 @@
             updateTransactionsList();
             saveData();
             showNotification('Balance reset successfully', 'success');
+        } else {
+            showNotification('Reset balance cancelled', 'warning');
         }
+    } else {
+        showNotification('Reset balance cancelled', 'warning');
+    }
+}
+
 
         function updateBalanceDisplay() {
             document.getElementById('currentBalance').textContent = formatCurrency(currentBalance);
         }
 
         function updateTransactionsList() {
-            const transactionsList = document.getElementById('transactionsList');
-            
-            if (transactions.length === 0) {
-                transactionsList.innerHTML = '<div class="no-transactions">No transactions yet</div>';
-                return;
-            }
+    const transactionsList = document.getElementById('transactionsList');
+    
+    if (transactions.length === 0) {
+        transactionsList.innerHTML = '<div class="no-transactions">No transactions yet</div>';
+        return;
+    }
 
-            transactionsList.innerHTML = transactions.map((transaction, index) => `
-                <div class="transaction-item">
-                    <div class="transaction-main">
-                        <div class="transaction-info">
-                            <div>${transaction.buyerName}</div>
-                            <div class="transaction-date">${transaction.date}</div>
-                        </div>
-                        <div class="transaction-amount">
-                            -${formatCurrency(transaction.amount)}
-                            <div style="color: #34a853; font-size: 12px;">+${formatCurrency(transaction.reward)} (0.5% reward)</div>
-                        </div>
-                    </div>
-                    <div class="transaction-status ${transaction.type === 'paid' ? 'status-paid' : 'status-borrowed'}">
-                        ${transaction.type === 'paid' ? `Paid ${transaction.fullyPaidDate ? `on ${transaction.fullyPaidDate}` : ''}` : 'Borrowed'}
-                    </div>
-                    ${transaction.type === 'borrowed' ? `
-                        <div class="remaining-amount">Amount to pay: ${formatCurrency(transaction.remainingAmount)}</div>
-                        <button class="paid-button" onclick="markAsPaid(${index})">Mark as Paid</button>
-                    ` : ''}
+    transactionsList.innerHTML = transactions.map((transaction, index) => `
+        <div class="transaction-item">
+            <div class="transaction-main">
+                <div class="transaction-info">
+                    <div>${transaction.buyerName}</div>
+                    <div class="transaction-date">${transaction.date}</div>
                 </div>
-            `).join('');
-        }
+                <div class="transaction-amount">
+                    -${formatCurrency(transaction.amount)}
+                    <div style="color: #34a853; font-size: 12px;">+${formatCurrency(transaction.reward)} (1% reward)</div>
+                </div>
+            </div>
+            <div class="transaction-status ${transaction.type === 'paid' ? 'status-paid' : 'status-borrowed'}">
+                ${transaction.type === 'paid' ? `Paid ${transaction.fullyPaidDate ? `on ${transaction.fullyPaidDate}` : ''}` : 'Borrowed'}
+            </div>
+            ${transaction.type === 'borrowed' ? `
+                <div class="remaining-amount">Amount to pay: ${formatCurrency(transaction.remainingAmount)}</div>
+                <button class="paid-button" onclick="markAsPaid(${index})">Mark as Paid</button>
+            ` : ''}
+        </div>
+    `).join('');
+}
 
-        function updateTransactionHistory() {
-            const historyContainer = document.getElementById('transactionHistory');
-            
-            if (historicalTransactions.length === 0) {
-                historyContainer.innerHTML = '<div class="no-transactions">No historical transactions</div>';
-                return;
-            }
+function updateTransactionHistory() {
+    const historyContainer = document.getElementById('transactionHistory');
+    
+    if (historicalTransactions.length === 0) {
+        historyContainer.innerHTML = '<div class="no-transactions">No historical transactions</div>';
+        return;
+    }
 
-            historyContainer.innerHTML = historicalTransactions.map((group, groupIndex) => {
-                const hasBorrowedTransactions = group.transactions.some(t => 
-                    t.type === 'borrowed' && t.remainingAmount > 0
-                );
+    historyContainer.innerHTML = historicalTransactions.map((group, groupIndex) => {
+        const hasBorrowedTransactions = group.transactions.some(t => 
+            t.type === 'borrowed' && t.remainingAmount > 0
+        );
 
-                return `
-                    <div class="history-group">
-                        <div class="history-header">
-                            <span>Session: ${group.date}</span>
-                            <div class="button-group">
-                                ${hasBorrowedTransactions ? 
-                                    '<span style="color: #d93025; margin-right: 10px;">Unpaid Balance!</span>' : ''}
-                                <button class="delete-button" onclick="deleteBatch(${groupIndex})">Delete Batch</button>
-                                ${hasBorrowedTransactions ? 
-                                    `<button class="complete-button" onclick="completeHistoricalPayments(${groupIndex})">
-                                        Complete All Payments
-                                    </button>` : ''}
+        return `
+            <div class="history-group">
+                <div class="history-header">
+                    <span>Session: ${group.date}</span>
+                    <div class="button-group">
+                        ${hasBorrowedTransactions ? 
+                            '<span style="color: #d93025; margin-right: 10px;">Unpaid Balance!</span>' : ''}
+                        <button class="delete-button" onclick="deleteBatch(${groupIndex})">Delete Batch</button>
+                        ${hasBorrowedTransactions ? 
+                            `<button class="complete-button" onclick="completeHistoricalPayments(${groupIndex})">
+                                Complete All Payments
+                            </button>` : ''}
+                    </div>
+                </div>
+                <div class="history-balance">Initial Balance: ${formatCurrency(group.initialBalance)}</div>
+                ${group.transactions.map(transaction => `
+                    <div class="transaction-item">
+                        <div class="transaction-main">
+                            <div class="transaction-info">
+                                <div>${transaction.buyerName}</div>
+                                <div class="transaction-date">${transaction.date}</div>
+                            </div>
+                            <div class="transaction-amount">
+                                -${formatCurrency(transaction.amount)}
+                                ${transaction.reward ? 
+                                    `<div style="color: #34a853; font-size: 12px;">
+                                        +${formatCurrency(transaction.reward)} (1% reward)
+                                    </div>` : ''}
                             </div>
                         </div>
-                        <div class="history-balance">Initial Balance: ${formatCurrency(group.initialBalance)}</div>
-                        ${group.transactions.map(transaction => `
-                            <div class="transaction-item">
-                                <div class="transaction-main">
-                                    <div class="transaction-info">
-                                        <div>${transaction.buyerName}</div>
-                                        <div class="transaction-date">${transaction.date}</div>
-                                    </div>
-                                    <div class="transaction-amount">
-                                        -${formatCurrency(transaction.amount)}
-                                        ${transaction.reward ? 
-                                            `<div style="color: #34a853; font-size: 12px;">
-                                                +${formatCurrency(transaction.reward)} (0.5% reward)
-                                            </div>` : ''}
-                                    </div>
-                                </div>
-                                <div class="transaction-status ${transaction.type === 'paid' ? 'status-paid' : 'status-borrowed'}">
-                                    ${transaction.type === 'paid' ? 
-                                        `Paid ${transaction.fullyPaidDate ? `on ${transaction.fullyPaidDate}` : ''}` : 
-                                        'Borrowed'}
-                                </div>
-                                ${transaction.type === 'borrowed' ? `
-                                    <div class="remaining-amount">
-                                        Final Remaining: ${formatCurrency(transaction.remainingAmount)}
-                                    </div>
-                                    ${transaction.payments.map(payment => `
-                                        <div class="transaction-date">
-                                            Payment: ${formatCurrency(payment.amount)} on ${payment.date}
-                                        </div>
-                                    `).join('')}
-                                ` : ''}
+                        <div class="transaction-status ${transaction.type === 'paid' ? 'status-paid' : 'status-borrowed'}">
+                            ${transaction.type === 'paid' ? 
+                                `Paid ${transaction.fullyPaidDate ? `on ${transaction.fullyPaidDate}` : ''}` : 
+                                'Borrowed'}
+                        </div>
+                        ${transaction.type === 'borrowed' ? `
+                            <div class="remaining-amount">
+                                Final Remaining: ${formatCurrency(transaction.remainingAmount)}
                             </div>
-                        `).join('')}
+                            ${transaction.payments.map(payment => `
+                                <div class="transaction-date">
+                                    Payment: ${formatCurrency(payment.amount)} on ${payment.date}
+                                </div>
+                            `).join('')}
+                        ` : ''}
                     </div>
-                `;
-            }).join('');
-        }
+                `).join('')}
+            </div>
+        `;
+    }).join('');
+}
 
         function updateOnlineStatus() {
             const indicator = document.getElementById('offlineIndicator');
@@ -678,33 +1288,130 @@
         }
 
         function loadData() {
-            try {
-                const savedData = localStorage.getItem('balanceTrackerData');
-                if (savedData) {
-                    const data = JSON.parse(savedData);
-                    currentBalance = data.currentBalance || 0;
-                    transactions = data.transactions || [];
-                    historicalTransactions = data.historicalTransactions || [];
-                    validateAndRepairData();
-                    updateBalanceDisplay();
-                    updateTransactionsList();
-                    updateTransactionHistory();
-                }
-            } catch (error) {
-                console.error('Error loading data:', error);
-                showNotification('Error loading saved data', 'error');
-                currentBalance = 0;
-                transactions = [];
-                historicalTransactions = [];
+    try {
+        const savedData = localStorage.getItem('balanceTrackerData');
+        if (savedData) {
+            const parsedData = JSON.parse(savedData);
+            const validatedData = validateLoadedData(parsedData);
+            
+            if (validatedData) {
+                currentBalance = validatedData.currentBalance;
+                transactions = validatedData.transactions;
+                historicalTransactions = validatedData.historicalTransactions || [];
+                dailyStats = validatedData.dailyStats || {
+                    date: new Date().toDateString(),
+                    total: 0,
+                    transactions: []
+                };
+                
+                // Check for day reset
+                checkAndResetDailyProgress();
+                
+                // Update UI
+                updateBalanceDisplay();
+                updateTransactionsList();
+                updateTransactionHistory();
+                updateRankings();
+                updateProgress();
+                
+                return true;
             }
         }
+        return false;
+    } catch (error) {
+        console.error('Error loading data:', error);
+        showNotification('Error loading saved data. Starting fresh.', 'error');
+        // Initialize fresh data
+        currentBalance = 0;
+        transactions = [];
+        historicalTransactions = [];
+        dailyStats = {
+            date: new Date().toDateString(),
+            total: 0,
+            transactions: []
+        };
+        return false;
+    }
+}
+function validateTransaction(transaction) {
+    if (!transaction.buyerName || typeof transaction.buyerName !== 'string') {
+        return false;
+    }
+    if (isNaN(transaction.amount) || transaction.amount <= 0) {
+        return false;
+    }
+    if (!['paid', 'borrowed'].includes(transaction.type)) {
+        return false;
+    }
+    return true;
+}
 
-        document.addEventListener('DOMContentLoaded', function() {
-            updateOnlineStatus();
-            loadData();
-            window.addEventListener('online', updateOnlineStatus);
-            window.addEventListener('offline', updateOnlineStatus);
-        });
+// Add event listener for hash changes to handle navigation
+window.addEventListener('hashchange', () => {
+    const hash = window.location.hash.replace('#', '');
+    if (['home', 'rankings', 'progress'].includes(hash)) {
+        showSection(hash);
+    }
+});
+        // Modify showSection to update URL hash
+function showSection(sectionName) {
+    // Hide all sections
+    document.querySelectorAll('.section').forEach(section => {
+        section.classList.remove('active');
+    });
+    
+    // Show selected section
+    document.getElementById(sectionName + 'Section').classList.add('active');
+    
+    // Update navigation highlighting
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    const navItem = Array.from(document.querySelectorAll('.nav-item'))
+        .find(item => item.textContent.toLowerCase().includes(sectionName));
+    if (navItem) {
+        navItem.classList.add('active');
+    }
+    
+    // Update URL hash without triggering hashchange event
+    const currentHash = window.location.hash.replace('#', '');
+    if (currentHash !== sectionName) {
+        history.pushState(null, '', `#${sectionName}`);
+    }
+    
+    // Update relevant data
+    if (sectionName === 'rankings') {
+        updateRankings();
+    } else if (sectionName === 'progress') {
+        updateProgress();
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Show loading screen for 3.5 seconds
+    const loadingScreen = document.getElementById('loadingScreen');
+    const mainContent = document.querySelector('.container');
+
+    // Hide main content initially
+    if (mainContent) {
+        mainContent.style.opacity = '0';
+        mainContent.style.transition = 'opacity 0.5s ease-in';
+    }
+
+    // Hide loading screen and show main content after 3.5 seconds
+    setTimeout(() => {
+        loadingScreen.classList.add('hide');
+        if (mainContent) {
+            mainContent.style.opacity = '1';
+        }
+    }, 3500);
+
+    // Your existing DOMContentLoaded code...
+    updateOnlineStatus();
+    loadData();
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+});
     </script>
 </body>
 </html>
