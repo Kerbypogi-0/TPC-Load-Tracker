@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Balance Tracker</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -545,6 +546,36 @@
         margin-top: 1em;
     }
 }
+.chart-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.chart-tab {
+    padding: 8px 16px;
+    background: #f0f2f5;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.chart-tab.active {
+    background: #1a73e8;
+    color: white;
+}
+
+.chart-container {
+    position: relative;
+    height: 300px;
+    margin: 20px 0;
+}
+
+canvas {
+    width: 100% !important;
+    height: 100% !important;
+}
     </style>
 </head>
 <body>
@@ -651,6 +682,16 @@
                 <div id="monthlyStats">
                     <!-- Monthly stats will be populated here -->
                 </div>
+                
+    <div class="progress-title">Earnings Trends</div>
+    <div class="chart-tabs">
+        <button class="chart-tab active" onclick="switchChart('area')">Area Chart</button>
+        <button class="chart-tab" onclick="switchChart('line')">Line Chart</button>
+    </div>
+    <div class="chart-container">
+        <canvas id="earningsChart"></canvas>
+    </div>
+</div>
                 <div class="chart-container" id="monthlyChart">
                     <!-- Chart will be rendered here -->
                 </div>
@@ -1485,6 +1526,171 @@ document.addEventListener('DOMContentLoaded', function() {
     window.addEventListener('online', updateOnlineStatus);
     window.addEventListener('offline', updateOnlineStatus);
 });
+let earningsChart = null;
+
+function initializeCharts() {
+    const ctx = document.getElementById('earningsChart').getContext('2d');
+    createAreaChart(ctx);
+}
+
+function createAreaChart(ctx) {
+    if (earningsChart) {
+        earningsChart.destroy();
+    }
+
+    const chartData = processEarningsData();
+
+    earningsChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: chartData.labels,
+            datasets: [{
+                label: 'Earnings per Batch',
+                data: chartData.earnings,
+                fill: true,
+                backgroundColor: 'rgba(26, 115, 232, 0.2)',
+                borderColor: 'rgba(26, 115, 232, 1)',
+                tension: 0.4,
+                pointRadius: 4,
+                pointBackgroundColor: 'rgba(26, 115, 232, 1)'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Earnings Progress Over Time'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return '₱' + context.raw.toFixed(2);
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '₱' + value;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function createLineChart(ctx) {
+    if (earningsChart) {
+        earningsChart.destroy();
+    }
+
+    const chartData = processEarningsData();
+
+    earningsChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: chartData.labels,
+            datasets: [{
+                label: 'Earnings',
+                data: chartData.earnings,
+                borderColor: 'rgba(26, 115, 232, 1)',
+                tension: 0.4,
+                pointRadius: 4,
+                fill: false
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Earnings Trend Line'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return '₱' + context.raw.toFixed(2);
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '₱' + value;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function processEarningsData() {
+    const allBatches = [
+        {
+            date: new Date().toLocaleDateString(),
+            transactions: transactions
+        },
+        ...historicalTransactions.map(group => ({
+            date: new Date(group.date).toLocaleDateString(),
+            transactions: group.transactions
+        }))
+    ];
+
+    const chartData = {
+        labels: [],
+        earnings: []
+    };
+
+    allBatches.reverse().forEach(batch => {
+        const batchEarnings = batch.transactions.reduce((sum, t) => sum + t.amount, 0);
+        chartData.labels.push(batch.date);
+        chartData.earnings.push(batchEarnings);
+    });
+
+    return chartData;
+}
+
+function switchChart(type) {
+    const ctx = document.getElementById('earningsChart').getContext('2d');
+    
+    document.querySelectorAll('.chart-tab').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    document.querySelector(`.chart-tab[onclick*='${type}']`).classList.add('active');
+    
+    if (type === 'area') {
+        createAreaChart(ctx);
+    } else {
+        createLineChart(ctx);
+    }
+}
+
+// Update the existing showSection function
+const originalShowSection = showSection;
+showSection = function(sectionName) {
+    originalShowSection(sectionName);
+    
+    if (sectionName === 'progress') {
+        setTimeout(() => {
+            if (!earningsChart && document.getElementById('earningsChart')) {
+                initializeCharts();
+            } else if (earningsChart) {
+                updateProgress();
+            }
+        }, 0);
+    }
+};
     </script>
 </body>
 </html>
