@@ -241,11 +241,60 @@
             width: auto;
         }
 
-        .button-group {
-            display: flex;
-            gap: 10px;
-            justify-content: flex-end;
-        }
+        
+
+.section-content {
+    display: none;
+    margin-top: 20px;
+}
+
+.section.active .section-content {
+    display: block;
+}
+
+.global-form {
+    margin-bottom: 20px;
+}
+
+.history-container {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #e8eaed;
+}
+
+/* Responsive adjustments for button groups */
+.button-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-top: 8px;
+}
+
+.button-group button {
+    flex: 1;
+    min-width: fit-content;
+    white-space: nowrap;
+    padding: 8px 12px;
+    font-size: 14px;
+}
+
+@media (max-width: 480px) {
+    .button-group {
+        flex-direction: column;
+    }
+    
+    .button-group button {
+        width: 100%;
+    }
+}
+
+.section {
+        display: none;
+    }
+    .section.active {
+        display: block;
+    }
 
         @keyframes slideDown {
             from {
@@ -502,23 +551,11 @@
     <div id="loadingScreen" class="loading-screen">
         <div class="animation-container">
             <div class="welcome-text">
-                <span>W</span>
-                <span>e</span>
-                <span>l</span>
-                <span>c</span>
-                <span>o</span>
-                <span>m</span>
-                <span>e</span>
+                <span>W</span><span>e</span><span>l</span><span>c</span><span>o</span><span>m</span><span>e</span>
                 <span>&nbsp;</span>
-                <span>T</span>
-                <span>P</span>
-                <span>C</span>
+                <span>T</span><span>P</span><span>C</span>
                 <span>&nbsp;</span>
-                <span>u</span>
-                <span>s</span>
-                <span>e</span>
-                <span>r</span>
-                <span>!</span>
+                <span>u</span><span>s</span><span>e</span><span>r</span><span>!</span>
             </div>
             <div class="loading-message">
                 Message Kerby to suggest your ideas <br>
@@ -527,56 +564,63 @@
         </div>
     </div>
     <div id="offlineIndicator" class="offline-indicator">Loading...</div>
-    <div class="container">
-        <h1>Balance Tracker</h1>
-        
-        <div class="balance-section">
-            <label>Current Balance</label>
-            <div class="balance" id="currentBalance">₱0.00</div>
-        </div>
+    
+            <!-- Main App Container -->
+<div class="container">
+    <h1>Balance Tracker</h1>
+    
+    <!-- Sticky Balance Section -->
+    <div class="balance-section sticky-balance">
+        <label>Current Balance</label>
+        <div class="balance" id="currentBalance">₱0.00</div>
+    </div>
 
-        <div class="form-group">
-            <label>Set Initial Balance</label>
-            <input type="number" id="initialBalance" placeholder="Enter initial balance">
-            <button onclick="setInitialBalance()">Set Balance</button>
-        </div>
-        <div id="homeSection" class="section active">
-        <div class="form-group">
-            <label>Buyer Name</label>
-            <input type="text" id="buyerName" placeholder="Enter buyer name">
-        </div>
+    <!-- Initial Balance Setting -->
+    <div class="form-group global-form">
+        <label>Set Initial Balance</label>
+        <input type="number" id="initialBalance" placeholder="Enter initial balance">
+        <button onclick="setInitialBalance()">Set Balance</button>
+    </div>
 
-        <div class="form-group">
-            <label>Amount</label>
-            <input type="number" id="amount" placeholder="Enter amount">
-        </div>
-        
-        <div class="form-group">
-            <label>Transaction Type</label>
-            <select id="transactionType">
-                <option value="paid">Paid</option>
-                <option value="borrowed">Borrowed</option>
-            </select>
-        </div>
-        
-        <button id="addTransactionBtn" onclick="addTransaction()">Add Transaction</button>
+    <!-- Home Section -->
+    <div id="homeSection" class="section active">
+        <div class="section-content">
+            <div class="form-group">
+                <label>Buyer Name</label>
+                <input type="text" id="buyerName" placeholder="Enter buyer name">
+            </div>
 
-        
-        <button onclick="resetBalance()" class="reset-button">Reset Balance</button>
+            <div class="form-group">
+                <label>Amount</label>
+                <input type="number" id="amount" placeholder="Enter amount">
+            </div>
+            
+            <div class="form-group">
+                <label>Transaction Type</label>
+                <select id="transactionType">
+                    <option value="paid">Paid</option>
+                    <option value="borrowed">Borrowed</option>
+                </select>
+            </div>
+            
+            <button id="addTransactionBtn" onclick="addTransaction()">Add Transaction</button>
+            <button onclick="resetBalance()" class="reset-button">Reset Balance</button>
+        </div>
 
         <div class="transactions" id="transactionsList">
             <div class="no-transactions">No transactions yet</div>
         </div>
+
+        <!-- Transaction History (only in home section) -->
+        <div class="history-container">
+            <h2>Transaction History</h2>
+            <div id="transactionHistory"></div>
+        </div>
     </div>
 
-    <div class="container">
-        <h2>Transaction History</h2>
-        <div id="transactionHistory"></div>
-    </div>
-    </div>
-
+    <!-- Rankings Section -->
     <div id="rankingsSection" class="section">
-        <div class="container">
+        <div class="section-content">
             <h1>Top Buyers Rankings</h1>
             <div id="rankingsList" class="rankings-list">
                 <!-- Rankings will be populated here -->
@@ -586,7 +630,7 @@
 
     <!-- Progress Section -->
     <div id="progressSection" class="section">
-        <div class="container">
+        <div class="section-content">
             <h1>Progress Overview</h1>
             
             <div class="progress-card">
@@ -613,6 +657,7 @@
             </div>
         </div>
     </div>
+</div>
 
     <!-- Bottom Navigation -->
     <div class="bottom-nav">
@@ -668,27 +713,49 @@ function checkAndResetDailyProgress() {
 
 
         function showSection(sectionName) {
-            // Hide all sections
-            document.querySelectorAll('.section').forEach(section => {
-                section.classList.remove('active');
-            });
-            
-            // Show selected section
-            document.getElementById(sectionName + 'Section').classList.add('active');
-            
-            // Update navigation highlighting
-            document.querySelectorAll('.nav-item').forEach(item => {
-                item.classList.remove('active');
-            });
-            event.currentTarget.classList.add('active');
-            
-            // Update relevant data
-            if (sectionName === 'rankings') {
-                updateRankings();
-            } else if (sectionName === 'progress') {
-                updateProgress();
-            }
-        }
+    // Hide all sections
+    document.querySelectorAll('.section').forEach(section => {
+        section.classList.remove('active');
+    });
+    
+    // Show selected section
+    const selectedSection = document.getElementById(sectionName + 'Section');
+    if (selectedSection) {
+        selectedSection.classList.add('active');
+    }
+    
+    // Update navigation highlighting
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    const navItem = Array.from(document.querySelectorAll('.nav-item'))
+        .find(item => item.textContent.toLowerCase().includes(sectionName));
+    if (navItem) {
+        navItem.classList.add('active');
+    }
+    
+    // Update URL hash without triggering hashchange event
+    const currentHash = window.location.hash.replace('#', '');
+    if (currentHash !== sectionName) {
+        history.pushState(null, '', `#${sectionName}`);
+    }
+    
+    // Update data only for the relevant section
+    if (sectionName === 'rankings') {
+        updateRankings();
+    } else if (sectionName === 'progress') {
+        updateProgress();
+    } else if (sectionName === 'home') {
+        updateTransactionsList();
+        updateTransactionHistory();
+    }
+    
+    // Scroll to top of the section
+    window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+    });
+}
 
         function updateRankings() {
             const buyerStats = {};
@@ -1391,11 +1458,18 @@ document.addEventListener('DOMContentLoaded', function() {
     // Show loading screen for 3.5 seconds
     const loadingScreen = document.getElementById('loadingScreen');
     const mainContent = document.querySelector('.container');
+    const historyContainer = document.querySelector('.history-container');
 
     // Hide main content initially
     if (mainContent) {
         mainContent.style.opacity = '0';
         mainContent.style.transition = 'opacity 0.5s ease-in';
+    }
+
+    // Set initial history container visibility based on current hash
+    if (historyContainer) {
+        const currentHash = window.location.hash.replace('#', '') || 'home';
+        historyContainer.style.display = currentHash === 'home' ? 'block' : 'none';
     }
 
     // Hide loading screen and show main content after 3.5 seconds
@@ -1406,7 +1480,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }, 3500);
 
-    // Your existing DOMContentLoaded code...
     updateOnlineStatus();
     loadData();
     window.addEventListener('online', updateOnlineStatus);
