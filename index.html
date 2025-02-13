@@ -90,6 +90,65 @@
            /* Remove bottom margin since nav bar is gone */
         }
 
+        .confirm-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1001;
+            max-width: 90%;
+            width: 300px;
+            text-align: center;
+        }
+
+        .confirm-modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+
+        .confirm-modal h3 {
+            margin: 0 0 15px 0;
+            color: #333;
+        }
+
+        .confirm-modal p {
+            margin: 0 0 20px 0;
+            color: #666;
+        }
+
+        .confirm-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .confirm-button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .confirm-yes {
+            background: #5B21B6;
+            color: white;
+        }
+
+        .confirm-no {
+            background: #DC2626;
+            color: white;
+        }
+
         .modal {
             position: fixed;
             top: 0;
@@ -294,13 +353,81 @@
             color: #333;
             padding: 20px;
             border-radius: 10px;
+            max-height: 80vh; /* Set maximum height to 80% of viewport height */
+            display: flex;
+            flex-direction: column;
+        }
+
+        .rankings-title {
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+            font-size: 1.25rem;
+            font-weight: bold;
+            position: sticky;
+            top: 0;
+            background: white;
+        }
+
+        .rankings-scroll {
+            overflow-y: auto;
+            flex-grow: 1;
+            margin: 0 -20px; /* Extend to edges */
+            padding: 0 20px; /* Restore padding */
+            /* Add smooth scrollbar for webkit browsers */
+            scrollbar-width: thin;
+            scrollbar-color: #5B21B6 #eee;
+        }
+
+        .rankings-scroll::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .rankings-scroll::-webkit-scrollbar-track {
+            background: #eee;
+            border-radius: 4px;
+        }
+
+        .rankings-scroll::-webkit-scrollbar-thumb {
+            background: #5B21B6;
+            border-radius: 4px;
         }
 
         .ranking-item {
             display: flex;
             justify-content: space-between;
-            padding: 10px;
+            padding: 15px 0;
             border-bottom: 1px solid #eee;
+        }
+
+        .ranking-position {
+            font-weight: bold;
+            color: #5B21B6;
+            margin-right: 10px;
+        }
+
+        .ranking-details {
+            text-align: right;
+        }
+
+        .ranking-total {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .ranking-count {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 4px;
+        }
+
+        .rankings-footer {
+            margin-top: 20px;
+            padding-top: 10px;
+            border-top: 1px solid #eee;
+            position: sticky;
+            bottom: 0;
+            background: white;
         }
     </style>
 </head>
@@ -401,9 +528,23 @@
     <!-- Rankings Modal -->
     <div id="rankingsModal" class="modal">
         <div class="modal-content rankings-container">
-            <h2 style="margin-bottom: 20px;">Transaction Rankings</h2>
-            <div id="rankingsList"></div>
-            <button class="modal-button" style="margin-top: 20px;" onclick="closeModal('rankingsModal')">Close</button>
+            <h2 class="rankings-title">Transaction Rankings</h2>
+            <div class="rankings-scroll" id="rankingsList"></div>
+            <div class="rankings-footer">
+                <button class="modal-button" onclick="closeModal('rankingsModal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="confirmationModal" style="display: none;">
+        <div class="confirm-modal-backdrop"></div>
+        <div class="confirm-modal">
+            <h3 id="confirmTitle"></h3>
+            <p id="confirmMessage"></p>
+            <div class="confirm-buttons">
+                <button class="confirm-button confirm-yes" id="confirmYes">Yes</button>
+                <button class="confirm-button confirm-no" id="confirmNo">No</button>
+            </div>
         </div>
     </div>
 
@@ -452,59 +593,126 @@
             document.getElementById('currentBalance').textContent = formatCurrency(currentBalance);
         }
 
-        function setInitialBalance() {
-    const amount = parseFloat(document.getElementById('initialBalance').value);
-    
-    if (isNaN(amount) || amount < 0) {
-        showNotification('Please enter a valid amount', 'error');
-        return;
-    }
 
-    // If there's already a balance, show confirmation dialog
-    if (currentBalance > 0) {
-        if (!confirm('Setting a new balance will reset your current balance. Are you sure you want to continue?')) {
-            closeModal('addMoneyModal');
-            return;
+        function showConfirmation(title, message, onConfirm) {
+            const modal = document.getElementById('confirmationModal');
+            const titleEl = document.getElementById('confirmTitle');
+            const messageEl = document.getElementById('confirmMessage');
+            const yesBtn = document.getElementById('confirmYes');
+            const noBtn = document.getElementById('confirmNo');
+
+            titleEl.textContent = title;
+            messageEl.textContent = message;
+            modal.style.display = 'block';
+
+            yesBtn.onclick = () => {
+                modal.style.display = 'none';
+                onConfirm();
+            };
+
+            noBtn.onclick = () => {
+                modal.style.display = 'none';
+            };
+
+            // Close on backdrop click
+            modal.querySelector('.confirm-modal-backdrop').onclick = () => {
+                modal.style.display = 'none';
+            };
         }
-        // Reset transactions when setting new balance
-        transactions = [];
-    }
 
-    currentBalance = amount;
-    updateBalanceDisplay();
-    document.getElementById('initialBalance').value = '';
-    closeModal('addMoneyModal');
-    showNotification('Initial balance set successfully', 'success');
-    updateTransactionsList();
-    saveData();
-}
 
-function resetBalance() {
-            if (confirm('Are you sure you want to reset your balance to ₱0.00? This action cannot be undone.')) {
-                if (confirm('Current transactions will be moved to history. Are you really sure?')) {
-                    // Save current transactions to historical transactions if there are any
-                    if (transactions.length > 0) {
-                        const currentBatch = {
-                            date: new Date().toLocaleString(),
-                            initialBalance: currentBalance,
-                            transactions: [...transactions]
-                        };
-                        
-                        // Add current batch to the beginning of historical transactions
-                        historicalTransactions.unshift(currentBatch);
-                    }
-
-                    // Reset current balance and clear current transactions
-                    currentBalance = 0;
-                    transactions = [];
-
-                    // Update UI
-                    updateBalanceDisplay();
-                    updateTransactionsList();
-                    saveData();
-                    showNotification('Balance has been reset and transactions archived', 'success');
-                }
+        function setInitialBalance() {
+            const amount = parseFloat(document.getElementById('initialBalance').value);
+            
+            if (isNaN(amount) || amount < 0) {
+                showNotification('Please enter a valid amount', 'error');
+                return;
             }
+
+            // If there's already a balance, show confirmation dialog
+            if (currentBalance > 0) {
+                showConfirmation(
+                    'Confirm New Balance',
+                    `Are you sure you want to set a new balance of ${formatCurrency(amount)}? Current transactions will be archived.`,
+                    () => {
+                        // Save current transactions to history before setting new balance
+                        if (transactions.length > 0) {
+                            const currentBatch = {
+                                date: new Date().toLocaleString(),
+                                initialBalance: currentBalance,
+                                transactions: [...transactions]
+                            };
+                            historicalTransactions.unshift(currentBatch);
+                        }
+                        
+                        transactions = [];
+                        currentBalance = amount;
+                        updateBalanceDisplay();
+                        document.getElementById('initialBalance').value = '';
+                        closeModal('addMoneyModal');
+                        showNotification('Balance set successfully', 'success');
+                        updateTransactionsList();
+                        saveData();
+                    }
+                );
+            } else {
+                showConfirmation(
+                    'Confirm Initial Balance',
+                    `Are you sure you want to set an initial balance of ${formatCurrency(amount)}?`,
+                    () => {
+                        currentBalance = amount;
+                        updateBalanceDisplay();
+                        document.getElementById('initialBalance').value = '';
+                        closeModal('addMoneyModal');
+                        showNotification('Initial balance set successfully', 'success');
+                        updateTransactionsList();
+                        saveData();
+                    }
+                );
+            }
+        }
+
+        function resetBalance() {
+            showConfirmation(
+                'Confirm Reset',
+                'Are you sure you want to reset your balance? Current transactions will be archived.',
+                () => {
+                    showConfirmation(
+                        'Final Confirmation',
+                        'This action cannot be undone. Do you really want to proceed?',
+                        () => {
+                            // Save current transactions to historical transactions if there are any
+                            if (transactions.length > 0) {
+                                const currentBatch = {
+                                    date: new Date().toLocaleString(),
+                                    initialBalance: currentBalance,
+                                    transactions: [...transactions]
+                                };
+                                historicalTransactions.unshift(currentBatch);
+                            }
+
+                            // Reset current balance and clear current transactions
+                            currentBalance = 0;
+                            transactions = [];
+
+                            // Update UI
+                            updateBalanceDisplay();
+                            updateTransactionsList();
+                            saveData();
+                            showNotification('Balance has been reset successfully', 'success');
+
+                            // Ask if they want to set new balance
+                            showConfirmation(
+                                'Set New Balance',
+                                'Would you like to set a new balance now?',
+                                () => {
+                                    showAddMoneyModal();
+                                }
+                            );
+                        }
+                    );
+                }
+            );
         }
 function makePayment() {
     const transactionIndex = parseInt(document.getElementById('currentTransactionIndex').value);
@@ -547,7 +755,7 @@ function makePayment() {
     showNotification('Payment recorded successfully', 'success');
 }
 
-        function addTransaction() {
+function addTransaction() {
             const buyerName = document.getElementById('buyerName').value.trim();
             const amount = parseFloat(document.getElementById('amount').value);
             const type = document.getElementById('transactionType').value;
@@ -562,13 +770,19 @@ function makePayment() {
                 return;
             }
 
+            // Check if transaction amount exceeds current balance
+            if (amount > currentBalance) {
+                showNotification(`Insufficient balance. Current balance: ${formatCurrency(currentBalance)}`, 'error');
+                return;
+            }
+
             // Calculate 0.5% reward
             const reward = Math.floor(amount * 0.005 * 100) / 100;
 
             const transaction = {
                 buyerName,
                 amount,
-                reward, // Add reward to transaction object
+                reward,
                 date: new Date().toLocaleString(),
                 type,
                 remainingAmount: type === 'borrowed' ? amount : 0
@@ -588,6 +802,8 @@ function makePayment() {
             showNotification('Transaction added successfully', 'success');
             saveData();
         }
+
+
         function updateTransactionsList(filteredTransactions = transactions) {
     const transactionsList = document.getElementById('transactionsList');
     
@@ -668,6 +884,13 @@ function showPaymentModal(transactionIndex) {
                 historicalTransactions = data.historicalTransactions || [];
                 updateBalanceDisplay();
                 updateTransactionsList();
+            }
+            
+            // Check if balance is set
+            if (currentBalance === 0 && transactions.length === 0) {
+                if (confirm('Would you like to set your initial balance?')) {
+                    showAddMoneyModal();
+                }
             }
         }
 
@@ -858,16 +1081,20 @@ function showPaymentModal(transactionIndex) {
             document.getElementById('rankingsList').innerHTML = rankingsList
                 .map((item, index) => `
                     <div class="ranking-item">
-                        <div>#${index + 1} ${item.name}</div>
                         <div>
-                            <div>Total: ${formatCurrency(item.total)}</div>
-                            <div>Transactions: ${item.count}</div>
+                            <span class="ranking-position">#${index + 1}</span>
+                            <span>${item.name}</span>
+                        </div>
+                        <div class="ranking-details">
+                            <div class="ranking-total">${formatCurrency(item.total)}</div>
+                            <div class="ranking-count">${item.count} transaction${item.count !== 1 ? 's' : ''}</div>
                         </div>
                     </div>
                 `).join('');
 
             document.getElementById('rankingsModal').style.display = 'flex';
         }
+
 
         function showDetails() {
             // Combine current and historical transactions
@@ -954,6 +1181,8 @@ function showPaymentModal(transactionIndex) {
             loadData();
             loadProfile();
         }); 
+
+        document.addEventListener('DOMContentLoaded', loadData);
     </script>
 </body>
 </html>
