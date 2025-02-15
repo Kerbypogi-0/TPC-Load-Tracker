@@ -622,98 +622,161 @@
 
 
         function setInitialBalance() {
-            const amount = parseFloat(document.getElementById('initialBalance').value);
-            
-            if (isNaN(amount) || amount < 0) {
-                showNotification('Please enter a valid amount', 'error');
-                return;
-            }
+    const amount = parseFloat(document.getElementById('initialBalance').value);
+    
+    if (isNaN(amount) || amount < 0) {
+        showNotification('Please enter a valid amount', 'error');
+        return;
+    }
 
-            // If there's already a balance, show confirmation dialog
-            if (currentBalance > 0) {
-                showConfirmation(
-                    'Confirm New Balance',
-                    `Are you sure you want to set a new balance of ${formatCurrency(amount)}? Current transactions will be archived.`,
-                    () => {
-                        // Save current transactions to history before setting new balance
-                        if (transactions.length > 0) {
+    // Get active borrowed transactions
+    const activeBorrowed = getActiveBorrowedTransactions();
+    
+    // Calculate total borrowed amount
+    const totalBorrowed = activeBorrowed.reduce((sum, t) => sum + t.remainingAmount, 0);
+    
+    // Check if new balance can cover borrowed amounts
+    if (amount < totalBorrowed) {
+        showNotification(
+            `New balance must be at least ${formatCurrency(totalBorrowed)} to cover existing borrowed amounts`,
+            'error'
+        );
+        return;
+    }
+
+    // If there's already a balance, show confirmation dialog
+    if (currentBalance > 0) {
+        showConfirmation(
+            'Confirm New Balance',
+            `Are you sure you want to set a new balance of ${formatCurrency(amount)}? Current transactions will be archived.`,
+            () => {
+                // Save non-borrowed transactions to history
+                if (transactions.length > 0) {
+                    const nonBorrowedTransactions = transactions.filter(t => 
+                        t.type !== 'borrowed' || t.remainingAmount === 0
+                    );
+                    
+                    if (nonBorrowedTransactions.length > 0) {
+                        const currentBatch = {
+                            date: new Date().toLocaleString(),
+                            initialBalance: currentBalance,
+                            transactions: nonBorrowedTransactions
+                        };
+                        historicalTransactions.unshift(currentBatch);
+                    }
+                }
+                
+                // Keep active borrowed transactions
+                transactions = activeBorrowed;
+                currentBalance = amount;
+                updateBalanceDisplay();
+                document.getElementById('initialBalance').value = '';
+                closeModal('addMoneyModal');
+                
+                if (activeBorrowed.length > 0) {
+                    showNotification(
+                        `New balance set with ${activeBorrowed.length} borrowed transaction(s) retained`,
+                        'success'
+                    );
+                } else {
+                    showNotification('Balance set successfully', 'success');
+                }
+                
+                updateTransactionsList();
+                saveData();
+            }
+        );
+    } else {
+        showConfirmation(
+            'Confirm Initial Balance',
+            `Are you sure you want to set an initial balance of ${formatCurrency(amount)}?`,
+            () => {
+                // Keep active borrowed transactions
+                transactions = activeBorrowed;
+                currentBalance = amount;
+                updateBalanceDisplay();
+                document.getElementById('initialBalance').value = '';
+                closeModal('addMoneyModal');
+                
+                if (activeBorrowed.length > 0) {
+                    showNotification(
+                        `Initial balance set with ${activeBorrowed.length} borrowed transaction(s) retained`,
+                        'success'
+                    );
+                } else {
+                    showNotification('Initial balance set successfully', 'success');
+                }
+                
+                updateTransactionsList();
+                saveData();
+            }
+        );
+    }
+}
+
+        function resetBalance() {
+    showConfirmation(
+        'Confirm Reset',
+        'Are you sure you want to reset your balance? Current transactions will be archived.',
+        () => {
+            showConfirmation(
+                'Final Confirmation',
+                'This action cannot be undone. Do you really want to proceed?',
+                () => {
+                    // Get active borrowed transactions before reset
+                    const activeBorrowed = getActiveBorrowedTransactions();
+                    
+                    // Save non-borrowed transactions to historical transactions
+                    if (transactions.length > 0) {
+                        const nonBorrowedTransactions = transactions.filter(t => 
+                            t.type !== 'borrowed' || t.remainingAmount === 0
+                        );
+                        
+                        if (nonBorrowedTransactions.length > 0) {
                             const currentBatch = {
                                 date: new Date().toLocaleString(),
                                 initialBalance: currentBalance,
-                                transactions: [...transactions]
+                                transactions: nonBorrowedTransactions
                             };
                             historicalTransactions.unshift(currentBatch);
                         }
-                        
-                        transactions = [];
-                        currentBalance = amount;
-                        updateBalanceDisplay();
-                        document.getElementById('initialBalance').value = '';
-                        closeModal('addMoneyModal');
-                        showNotification('Balance set successfully', 'success');
-                        updateTransactionsList();
-                        saveData();
                     }
-                );
-            } else {
-                showConfirmation(
-                    'Confirm Initial Balance',
-                    `Are you sure you want to set an initial balance of ${formatCurrency(amount)}?`,
-                    () => {
-                        currentBalance = amount;
-                        updateBalanceDisplay();
-                        document.getElementById('initialBalance').value = '';
-                        closeModal('addMoneyModal');
-                        showNotification('Initial balance set successfully', 'success');
-                        updateTransactionsList();
-                        saveData();
-                    }
-                );
-            }
-        }
 
-        function resetBalance() {
-            showConfirmation(
-                'Confirm Reset',
-                'Are you sure you want to reset your balance? Current transactions will be archived.',
-                () => {
+                    // Reset current balance
+                    currentBalance = 0;
+                    
+                    // Clear current transactions but keep active borrowed ones
+                    transactions = activeBorrowed;
+
+                    // Update UI
+                    updateBalanceDisplay();
+                    updateTransactionsList();
+                    saveData();
+                    showNotification('Balance has been reset successfully', 'success');
+
+                    // If there are active borrowed transactions, show a notification
+                    if (activeBorrowed.length > 0) {
+                        showNotification(
+                            `${activeBorrowed.length} borrowed transaction(s) retained`,
+                            'success'
+                        );
+                    }
+
+                    // Ask if they want to set new balance
                     showConfirmation(
-                        'Final Confirmation',
-                        'This action cannot be undone. Do you really want to proceed?',
+                        'Set New Balance',
+                        'Would you like to set a new balance now?',
                         () => {
-                            // Save current transactions to historical transactions if there are any
-                            if (transactions.length > 0) {
-                                const currentBatch = {
-                                    date: new Date().toLocaleString(),
-                                    initialBalance: currentBalance,
-                                    transactions: [...transactions]
-                                };
-                                historicalTransactions.unshift(currentBatch);
-                            }
-
-                            // Reset current balance and clear current transactions
-                            currentBalance = 0;
-                            transactions = [];
-
-                            // Update UI
-                            updateBalanceDisplay();
-                            updateTransactionsList();
-                            saveData();
-                            showNotification('Balance has been reset successfully', 'success');
-
-                            // Ask if they want to set new balance
-                            showConfirmation(
-                                'Set New Balance',
-                                'Would you like to set a new balance now?',
-                                () => {
-                                    showAddMoneyModal();
-                                }
-                            );
+                            showAddMoneyModal();
                         }
                     );
                 }
             );
         }
+    );
+}
+
+
 function makePayment() {
     const transactionIndex = parseInt(document.getElementById('currentTransactionIndex').value);
     const paymentAmount = parseFloat(document.getElementById('paymentAmount').value);
@@ -802,6 +865,22 @@ function addTransaction() {
             showNotification('Transaction added successfully', 'success');
             saveData();
         }
+
+        function getActiveBorrowedTransactions() {
+    // Get borrowed transactions from current transactions
+    const currentBorrowed = transactions.filter(t => 
+        t.type === 'borrowed' && t.remainingAmount > 0
+    );
+    
+    // Get borrowed transactions from historical transactions
+    const historicalBorrowed = historicalTransactions.flatMap(batch => 
+        batch.transactions.filter(t => 
+            t.type === 'borrowed' && t.remainingAmount > 0
+        )
+    );
+    
+    return [...currentBorrowed, ...historicalBorrowed];
+}
 
 
         function updateTransactionsList(filteredTransactions = transactions) {
@@ -1095,6 +1174,7 @@ function showPaymentModal(transactionIndex) {
             document.getElementById('rankingsModal').style.display = 'flex';
         }
 
+        
 
         function showDetails() {
             // Combine current and historical transactions
