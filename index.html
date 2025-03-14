@@ -882,8 +882,43 @@ function addTransaction() {
     return [...currentBorrowed, ...historicalBorrowed];
 }
 
+function deleteTransaction(index) {
+    // Ask for confirmation before deleting
+    showConfirmation(
+        'Delete Transaction',
+        'Are you sure you want to delete this transaction? The amount will be returned to your balance.',
+        () => {
+            const transaction = transactions[index];
+            
+            // If it's a borrowed transaction
+            if (transaction.type === 'borrowed' && transaction.remainingAmount > 0) {
+                // Return only the remaining amount to the balance
+                currentBalance += transaction.remainingAmount;
+                // Also remove the reward that was added for this transaction
+                currentBalance -= transaction.reward;
+            } 
+            // If it's a paid transaction or fully paid borrowed transaction
+            else {
+                // Return the full amount to the balance
+                currentBalance += transaction.amount;
+                // Also remove the reward that was added for this transaction
+                currentBalance -= transaction.reward;
+            }
+            
+            // Remove the transaction from the array
+            transactions.splice(index, 1);
+            
+            // Update the UI
+            updateBalanceDisplay();
+            updateTransactionsList();
+            saveData();
+            
+            showNotification('Transaction deleted successfully', 'success');
+        }
+    );
+}
 
-        function updateTransactionsList(filteredTransactions = transactions) {
+function updateTransactionsList(filteredTransactions = transactions) {
     const transactionsList = document.getElementById('transactionsList');
     
     if (filteredTransactions.length === 0) {
@@ -907,19 +942,63 @@ function addTransaction() {
             ${transaction.type === 'borrowed' && transaction.remainingAmount > 0 ? `
                 <div style="margin-top: 10px;">
                     <div>Remaining: ${formatCurrency(transaction.remainingAmount)}</div>
+                    <div style="display: flex; gap: 10px; margin-top: 5px;">
+                        <button 
+                            class="modal-button" 
+                            style="flex: 1; padding: 8px; font-size: 14px;"
+                            onclick="showPaymentModal(${index})"
+                        >
+                            Make Payment
+                        </button>
+                        <button 
+                            class="modal-button" 
+                            style="flex: 1; padding: 8px; background: #DC2626; font-size: 14px;"
+                            onclick="deleteTransaction(${index})"
+                        >
+                            Delete
+                        </button>
+                    </div>
+                </div>
+            ` : `
+                <div style="margin-top: 10px;">
                     <button 
                         class="modal-button" 
-                        style="margin-top: 5px; padding: 5px;"
-                        onclick="showPaymentModal(${index})"
+                        style="width: 100%; padding: 8px; background: #DC2626; font-size: 14px;"
+                        onclick="deleteTransaction(${index})"
                     >
-                        Make Payment
+                        Delete
                     </button>
                 </div>
-            ` : ''}
+            `}
         </div>
     `).join('');
 }
 
+// Add some additional CSS to ensure responsiveness
+// You can add this to your existing <style> tag
+const additionalStyles = `
+@media (max-width: 400px) {
+    .transaction-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .transaction-header > div:last-child {
+        margin-top: 5px;
+    }
+    
+    .modal-button {
+        font-size: 13px !important;
+        padding: 6px !important;
+    }
+}
+`;
+
+// Add the styles when the document is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    const styleTag = document.querySelector('style');
+    styleTag.textContent += additionalStyles;
+});
 // Add payment modal HTML after your existing modals
 const paymentModal = `
 <div id="paymentModal" class="modal">
